@@ -1,7 +1,9 @@
 
 # 🏡 Homelab – Enterprise-Grade Learning & Showcase
 
-This **HomeLab** project is designed as a comprehensive, hands-on, personal learning and showcase environment for **enterprise-grade IT architecture, DevOps, SRE, and cloud-native practices**. The lab serves both as a personal sandbox and a professional portfolio, demonstrating the ability to plan, design, deploy, maintain, and operate complex infrastructure and software systems following **best practices across all layers of the stack**.
+This **HomeLab** project is designed as a comprehensive,
+hands-on, personal learning and showcase environment for **enterprise-grade IT architecture,
+DevOps, SRE, and cloud-native practices**. The lab serves both as a personal sandbox and a professional portfolio, demonstrating the ability to plan, design, deploy, maintain, and operate complex infrastructure and software systems following **best practices across all layers of the stack**.
 
 It is not only a playground for experimentation, but also a structured environment where every decision, deployment, and configuration reflects real-world, production-inspired workflows.
 
@@ -117,5 +119,3 @@ The lab also doubles showing not only technical skills but also **structured, pr
 - Learning and showcasing skills go hand-in-hand
 - Continuous improvement and iteration
 - Cost efficiency without compromising security and learning outcomes
-
-
