@@ -29,12 +29,4 @@ These three nodes serve as dedicated [[llnotes/Kubernetes-Nodes.md#Worker Nodes|
 *   Acting as part of the horizontally scaled compute and storage pool.
 *   Managed via [[llnotes/Talos-API.md|Talos API]] (using `talosctl`) due to [[llnotes/Immutable-infrastructure.md|immutable OS]] design.
 
----
-
-## Related Links
-- [[03-infrastructure/README.md|Infrastructure Overview]]
-- [[02-decisions/hardware_selection.md|Hardware Selection Justification]]
-- [[04-platform/kubernetes_distro.md|Kubernetes Distribution & OS]]
-- [[llnotes/Kubernetes-Nodes.md]]
-- [[llnotes/SSD.md]]
-- [[llnotes/ZFS.md]]
+--
