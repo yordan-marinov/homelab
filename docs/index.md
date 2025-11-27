@@ -1,69 +1,72 @@
-# Homelab Documentation Index
+# Documentation Table of Contents
 
-Welcome to the documentation hub for my **enterprise-grade homelab project**.
-This space acts as a **curated showcase** of architecture decisions, infrastructure layouts, automation, and operations — reflecting real-world production practices applied in a personal environment.
+This document serves as the main entry point for navigating the Home Lab Project documentation.
 
-This index provides an entry point into the structure, goals, and growing body of documentation.
+## Sections
+
+* [01-Overview](01-overview/README.md)
+  * [Project Goals](01-overview/goals.md)
+  * [High-Level Architecture](01-overview/architecture_overview.md)
+  * [Firewall Fundamentals](01-overview/firewall_intro.md)
+* [02-Decisions](02-decisions/README.md)
+  * [Hardware Selection Justification](02-decisions/hardware_selection.md)
+  * [Software & OS Choices](02-decisions/software_os_choices.md)
+  * [Network Topology Decisions](02-decisions/network_topology_decisions.md)
+  * [Storage Strategy (Ceph vs. NAS)](02-decisions/storage_strategy.md)
+  * [Trade-offs & Compromises](02-decisions/tradeoffs_compromises.md)
+* [03-Infrastructure](03-infrastructure/README.md)
+  * [Firewall PC Details](03-infrastructure/firewall_pc.md)
+  * [Kubernetes Master Nodes (Dell Micros)](03-infrastructure/k8s_masters.md)
+  * [Kubernetes Worker Nodes (Dell Micros)](03-infrastructure/k8s_workers_dell.md)
+  * [Kubernetes Worker Node (HP EliteDesk)](03-infrastructure/k8s_worker_hp.md)
+  * [Kubernetes Worker Node (Lenovo M720s)](03-infrastructure/k8s_worker_lenovo.md)
+  * [Dedicated NAS Server (Apple Tower)](03-infrastructure/nas_server.md)
+  * [Managed Switch Details](03-infrastructure/managed_switch.md)
+  * [Repurposed Wi-Fi APs](03-infrastructure/repurposed_wifi_aps.md)
+* [04-Platform](04-platform/README.md)
+  * [Kubernetes Distribution (K3s/Talos)](04-platform/kubernetes_distro.md)
+  * [Core Kubernetes Components](04-platform/core_components.md)
+  * [High Availability Design](04-platform/high_availability_design.md)
+* [05-Software](05-software/README.md)
+  * [Operating System (Nodes)](05-software/os_nodes.md)
+  * [Firewall OS (OPNsense)](05-software/opnsense.md)
+  * [Distributed Storage (Rook/Ceph)](05-software/rook_ceph.md)
+  * [NAS OS (TrueNAS SCALE)](05-software/truenas_scale.md)
+  * [Monitoring (Prometheus/Grafana)](05-software/monitoring.md)
+  * [Logging (Loki/Fluentd)](05-software/logging.md)
+  * [Reverse Proxy (HAProxy/Ingress)](05-software/reverse_proxy.md)
+  * [DNS (OPNsense Unbound/Pi-hole)](05-software/dns.md)
+  * [Applications & Services (Plex, Nextcloud, DBs)](05-software/applications.md)
+* [06-Network](06-network/README.md)
+  * [Physical Network Topology Diagram](06-network/physical_topology.md)
+  * [Logical Network Diagram (VLANs)](06-network/logical_topology_vlans.md)
+  * [IP Addressing Scheme](06-network/ip_addressing_scheme.md)
+  * [VLAN Configuration (OPNsense)](06-network/opnsense_vlans.md)
+  * [VLAN Configuration (Managed Switch)](06-network/switch_vlans.md)
+  * [Firewall Rules (OPNsense)](06-network/opnsense_firewall_rules.md)
+  * [DHCP & DNS Configuration](06-network/dhcp_dns.md)
+  * [VPN Setup (OPNsense)](06-network/vpn_setup.md)
+  * [OPNsense GUI WAN PPPoE Setup](06-network/opnsense_gui_wan_pppoe_setup.md)
+* [07-Storage](07-storage/README.md)
+  * [Ceph Cluster Design](07-storage/ceph_cluster_design.md)
+  * [Rook Deployment on Kubernetes](07-storage/rook_deployment.md)
+  * [Persistent Storage Classes (CSI)](07-storage/persistent_storage.md)
+  * [Drive Allocation per Node](07-storage/drive_allocation.md)
+  * [Storage Expansion Strategy](07-storage/storage_expansion.md)
+* [08-Operations](08-operations/README.md)
+  * [Backup & Recovery Strategy](08-operations/backup_recovery.md)
+  * [Monitoring Alerts](08-operations/monitoring_alerts.md)
+  * [Maintenance Procedures](08-operations/maintenance.md)
+  * [Troubleshooting Guide](08-operations/troubleshooting.md)
+* [09-Docs](09-docs/README.md)
+  * [OPNsense Official Documentation](09-docs/opnsense_docs.md)
+  * [Kubernetes Official Documentation](09-docs/kubernetes_docs.md)
+  * [Rook/Ceph Official Documentation](09-docs/rook_ceph_docs.md)
+  * [Hardware Manuals & Drivers](09-docs/hardware_manuals.md)
+* [10-Architecture](10-architecture/README.md)
+  * [High-Level Architectural View](10-architecture/high_level_view.md)
+  * [Detailed Component Diagram](10-architecture/detailed_component_diagram.md)
+  * [Security Architecture Design](10-architecture/security_architecture.md)
+  * [Scalability & Resilience Design](10-architecture/scalability_resilience.md)
 
 ---
-
-## 📘 Overview
-
-- **Purpose:** Hands-on learning, experimentation, and demonstration of DevOps, SRE, and cloud-native skills.
-- **Focus:** Infrastructure design, automation, observability, networking, security, and platform engineering.
-- **Philosophy:** Build with production standards, learn with freedom.
-
----
-
-## 📂 Documentation Structure
-
-As the project evolves, documentation will be organized into the following sections:
-
-### **1. Overview & Vision**
-- Project vision and learning goals
-- High-level system overview
-
-### **2. Architecture & Design**
-- Logical and physical architecture
-- Network topology
-- Platform design
-- Storage layout
-
-### **3. Decisions (ADRs)**
-- Architecture Decision Records
-- Trade-offs and reasoning
-
-### **4. Infrastructure**
-- Hardware inventory
-- Terraform, automation scripts
-- Cluster bootstrap notes
-
-### **5. Platform Layer**
-- Kubernetes configuration
-- GitOps setup
-- Addons and operators
-
-### **6. Services**
-- Self-hosted platforms
-- Automations, CI/CD components
-
-### **7. Operations**
-- Monitoring, logging, alerting
-- Backups, DR
-- Runbooks
-
----
-
-## 🧭 Status
-
-This documentation is currently in its **initial scaffold phase**.
-Sections will be expanded as the homelab evolves, with curated summaries drawn from deeper research and experimental notes stored privately.
-
----
-
-## 🔗 Related
-
-- [Main Repository README](../README.md) – project philosophy, goals, and direction
-- [Infrastructure](../infra/) – IaC, automation, and configuration as the system grows
-
-
