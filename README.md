@@ -1,121 +1,88 @@
-
 # 🏡 Homelab – Enterprise-Grade Learning & Showcase
 
-This **HomeLab** project is designed as a comprehensive,
-hands-on, personal learning and showcase environment for **enterprise-grade IT architecture,
-DevOps, SRE, and cloud-native practices**. The lab serves both as a personal sandbox and a professional portfolio, demonstrating the ability to plan, design, deploy, maintain, and operate complex infrastructure and software systems following **best practices across all layers of the stack**.
+This **HomeLab** project is a comprehensive, hands-on, personal learning and showcase environment for **enterprise-grade IT architecture, DevOps, SRE, and cloud-native practices**. It functions as both a personal sandbox and a professional portfolio, demonstrating the ability to design, deploy, maintain, and operate complex infrastructure and software systems following **industry best practices**.
 
-It is not only a playground for experimentation, but also a structured environment where every decision, deployment, and configuration reflects real-world, production-inspired workflows.
+Every decision, deployment, and configuration within this lab reflects real-world, production-inspired workflows, emphasizing structured, process-driven thinking.
 
 ---
 
-## 🌐 Vision & Objectives
+## 🌐 Vision & Core Objectives
 
-The main goal of this homelab is to **bridge the gap between learning and real-world operational excellence** by:
+The primary goal of this homelab is to **bridge the gap between learning and operational excellence** by:
 
-- Practicing **end-to-end infrastructure design**, including hardware, networking, storage, virtualisation, and container orchestration
-- Learning and implementing **cloud-native architecture principles** with Kubernetes, CI/CD, GitOps, and microservices
-- Building expertise in **DevOps, SRE, and secure operations**, including monitoring, alerting, logging, and incident response
-- Understanding and applying **best practices for scalability, availability, resilience, and automation**
-- Maintaining a **documented learning journey** with decisions, trade-offs, and lessons learned
-- Demonstrating **mature project management skills**, modular architecture planning, and operational hygiene
-
-This lab is as much about **learning and experimentation** as it is about **creating a demonstrable showcase of technical maturity**.
+- **Designing End-to-End Infrastructure:** From bare-metal hardware and advanced networking to container orchestration and hybrid storage.
+- **Mastering Cloud-Native:** Deep practical experience with Kubernetes, CI/CD, and GitOps for modern application delivery.
+- **Security & Resilience:** Implementing robust network security, high availability, and disaster recovery strategies.
+- **Operational Proficiency:** Building expertise in DevOps, SRE, observability (monitoring, logging), and incident management.
+- **Knowledge Management:** Documenting the entire learning journey, decisions, and lessons learned (see `docs/` for details).
 
 ---
 
-## 🧱 Core Concepts & Design Principles
+## 🧱 Key Architectural Principles
 
-1. **Infrastructure as Code (IaC) & GitOps**
-   - All deployments, configurations, and automation are version-controlled
-   - Infrastructure changes are repeatable, auditable, and maintainable
+The design of this homelab is founded on principles common in enterprise environments:
 
-2. **Cloud-Native & Containerisation**
-   - Kubernetes clusters (multi-node) as the core orchestration platform
-   - Containerised services for microservices, automation, CI/CD pipelines, and monitoring
-
-3. **Networking & Security**
-   - Secure network segmentation with VLANs, firewalls, VPNs
-   - Zero-trust principles where feasible
-   - Monitoring and logging for visibility and incident analysis
-
-4. **Storage & Backup Strategy**
-   - Distributed storage (Ceph/Longhorn) for operational workloads
-   - NAS/Media storage for personal cloud and backup services
-   - Automated backup and restore pipelines
-
-5. **Observability & Reliability Engineering**
-   - Metrics, logs, and traces with Prometheus, Grafana, Loki
-   - Alerting for incidents and anomalies
-   - Experimenting with SLO/SLI tracking and chaos testing
-
-6. **Automation & CI/CD**
-   - Continuous integration pipelines for code validation
-   - Continuous deployment for services and applications
-   - GitOps-driven deployments with declarative configs
-
-7. **Documentation & Knowledge Management**
-   - Organised notes with Obsidian for learning, decisions, and lessons
-   - Versioned project documentation for reproducibility
-   - Linking between hardware, software, networking, and learning topics
-
-8. **Modular & Scalable Architecture**
-   - Hardware and software components can be replaced or expanded easily
-   - Design supports incremental growth, experimentation, and high availability
+1. **Bare-Metal & Immutable Infrastructure:** Direct hardware interaction, reduced overhead, and consistent, easily replaceable systems (e.g., [[Talos Linux]] for Kubernetes hosts).
+2. **Perimeter Security & Network Segmentation:** A dedicated, multi-interface [[OPNsense Firewall]] establishes a single security boundary, with internal VLANs isolating different trust zones (e.g., Kubernetes, Management, IoT, NAS, Home Wi-Fi).
+3. **Hybrid & Resilient Storage:** Combining [[Ceph]] (for Kubernetes-native operational data) with a dedicated [[ZFS-based NAS]] (for bulk media archives), both designed for high availability and data integrity.
+4. **Cloud-Native Orchestration:** Kubernetes (multi-node, highly available) serves as the core platform for automated application deployment, scaling, and management.
+5. **Observability & Automation:** Integrated tools for comprehensive monitoring, logging, and automated workflows (CI/CD, GitOps) to ensure reliability and efficiency.
+6. **Resource Optimization:** Strategic use of cost-effective, energy-efficient hardware, focusing on maximizing utility and minimizing operational overhead.
 
 ---
 
 ## 🔑 Learning & Skill Development Focus
 
-- **DevOps Practices:** CI/CD, automation, IaC, GitOps, observability
-- **SRE Principles:** Reliability, monitoring, incident management, SLIs/SLOs
-- **Cloud-Native Architecture:** Kubernetes, microservices, service mesh, container orchestration
-- **Networking & Security:** Firewalls, VLANs, VPNs, zero-trust networks
-- **Storage & Backup:** NAS, NFS, distributed storage, replication, snapshots
-- **Project Management:** Modular structure, documentation, decision tracking, lessons learned
-- **Hardware & Infrastructure:** Bare-metal clusters, compute nodes, NAS, switches, cabling, virtualisation
+This project is a vehicle for developing and showcasing advanced skills in:
+
+- **DevOps & SRE:** CI/CD, Automation, Infrastructure as Code (IaC), GitOps, Observability.
+- **Cloud-Native:** Kubernetes Architecture, Containerization, Microservices, Service Mesh.
+- **Networking & Security:** Firewalls, VLANs, VPNs, Zero-Trust Concepts, Intrusion Detection.
+- **Storage Systems:** ZFS, Distributed Storage (Ceph), Replication, Snapshots, Backup Strategies.
+- **Infrastructure Management:** Bare-metal operations, server administration, troubleshooting across layers.
 
 ---
 
-## 📂 Project Structure (Conceptual)
+## **5. Project Structure**
 
-The project is organised to reflect **production-ready modularity**:
+The project documentation is organized for clarity and modularity:
 
 ```
 homelab/
-├── docs/            # Top-level documentation
-│   └── index.md     # Overview and initial notes
-├── infra/           # IaC, scripts, and automation
-├── README.md        # Main repo overview
-└── .devcontainer/   # Dev Container setup (optional at this stage)
+├── docs/                # Comprehensive documentation: all details, configurations, decisions, and learning notes
+│ └── index.md           # Main entry point and topic map for detailed docs
+│ └── README.md          # Detailed overview of the project, goals, and architecture (more verbose than this repo README)
+│ └── 01-overview/       # Project vision, goals, high-level architecture
+│ └── 02-decisions/      # Justifications for hardware, software, and design choices
+│ └── 03-infrastructure/ # Detailed hardware specifications for each component
+│ └── 04-platform/       # Kubernetes platform specifics (distro, HA design)
+│ └── 05-software/       # Software stack beyond core OS/K8s
+│ └── 06-network/        # Full network topology, IP scheme, OPNsense/Switch config
+│ └── 07-storage/        # Ceph and NAS storage design and implementation
+│ └── 08-operations/     # Monitoring, logging, backup, and maintenance procedures
+│ └── 09-docs/           # External references, templates
+│ └── 10-architecture/   # Architectural diagrams and design principles
+│ └── learning/          # Broader conceptual learning notes (Zettelkasten style)
+│ └── llnotes/           # Atomic, specific "how-to" and concept notes (Zettelkasten style)
+│ └── tasks.md           # Ongoing tasks and future enhancements
+├── infra/               # Infrastructure as Code (IaC) files, deployment scripts, automation
+├── README.md            # This main repository overview (high-level, conceptual)
+└── .devcontainer/       # Dev Container setup (optional)
 
 ```
 
-Every folder captures decisions, configurations, and lessons learned, following **best practices for documentation, maintainability, and reproducibility**.
+---
+
+## **6. Outcomes & Showcase**
+
+Through this homelab, I aim to demonstrate the ability to **design, implement, and operate enterprise-grade infrastructure**, showcasing technical mastery, security-focused operations, and a structured approach to problem-solving and knowledge management.
 
 ---
 
-## 🎯 Outcomes & Showcase
+## **7. Philosophy**
 
-By maintaining this *homelab*, I aim to:
+> "Build like you run production, learn like it’s your sandbox. Document everything."
 
-- Demonstrate ability to **design and maintain enterprise-grade infrastructure**
-- Practice **security-focused operations** in a realistic environment
-- Create **reusable templates and automation** for future projects
-- Maintain **hands-on expertise with current industry tools**
-- Showcase **seniority in planning, architecture, and operational management**
+This README serves as your high-level executive summary, providing a quick, compelling overview. All the rich details, justifications, configuration steps, and `llnotes/` will reside within the `docs/` folder, accessible to anyone who wants to "dive deeper" without cluttering this top-level overview.
 
-The lab also doubles showing not only technical skills but also **structured, process-driven thinking**.
-
----
-
-## ⚡ Philosophy
-
-> "Build like you run production, learn like it’s your sandbox."
-
-- Production-like architecture where applicable
-- Safe experimentation and failure allowed
-- Documentation and decision tracking first-class
-- Learning and showcasing skills go hand-in-hand
-- Continuous improvement and iteration
-- Cost efficiency without compromising security and learning outcomes
+This is a much better structure for a public-facing repository!
