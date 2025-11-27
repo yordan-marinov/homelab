@@ -35,11 +35,3 @@ Specifications and role of the primary D-Link managed switch.
 ## 8. [[03-infrastructure/repurposed_wifi_aps.md|Repurposed Wi-Fi APs]]
 
 Details of the existing routers converted to Access Points.
-
----
-
-## Related Links
-- [[01-overview/README.md|Project Overview]]
-- [[02-decisions/README.md|Decisions Overview]]
-- [[02-decisions/hardware_selection.md|Hardware Selection Justification]]
-- [[10-architecture/detailed_component_diagram.md|Detailed Component Diagram]]
