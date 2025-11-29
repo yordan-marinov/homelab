@@ -1,6 +1,6 @@
 # 02-Decisions: Architectural Choices and Justifications
 
-This section details the critical decisions made during the planning and initial setup phases of the [[Home Lab Project]]. Each decision is accompanied by its rationale, considering factors such as cost, performance, scalability, security, and learning objectives. Understanding these choices is key to comprehending the overall [[01-overview/architecture_overview.md|architecture]].
+This section details the critical decisions made during the planning and initial setup phases of the Home Lab Project. Each document provides its rationale, considering factors such as cost, performance, scalability, security, and learning objectives. Understanding these choices is key to comprehending the overall [[01-overview/architecture_overview.md|architecture]].
 
 ---
 
@@ -16,11 +16,21 @@ Selecting the operating systems and core software components.
 
 Designing the physical and logical network structure.
 
-## 4. [[02-decisions/storage_strategy.md|Storage Strategy (Ceph vs. NAS)]]
+## 4. [[02-decisions/storage_strategy.md|Storage Strategy (Hybrid: Ceph on K8s + TrueNAS)]]
 
 Deciding on the hybrid approach for data storage.
 
-## 5. [[02-decisions/tradeoffs_compromises.md|Trade-offs & Compromises]]
+## 5. [[02-decisions/management_plane_design.md|Management Plane Design]]
+
+Rationale for the dedicated Proxmox host to manage and observe the cluster.
+
+## 6. [[02-decisions/tradeoffs_compromises.md|Trade-offs & Compromises]]
 
 Acknowledging the practical compromises made to balance ideal scenarios with real-world constraints.
 
+---
+
+## Related Links
+
+- [[docs/index.md|Homelab Project Documentation Index]]
+- [[01-overview/architecture_overview.md|High-Level Architecture Overview]]
