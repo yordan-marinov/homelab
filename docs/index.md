@@ -1,6 +1,6 @@
 # Documentation Table of Contents
 
-This document serves as the main entry point for navigating the Home Lab Project documentation.
+This document serves as the main entry point for navigating the Home Lab Project's detailed documentation within the repository.
 
 ## Sections
 
@@ -13,13 +13,14 @@ This document serves as the main entry point for navigating the Home Lab Project
   * [Software & OS Choices](02-decisions/software_os_choices.md)
   * [Network Topology Decisions](02-decisions/network_topology_decisions.md)
   * [Storage Strategy (Ceph vs. NAS)](02-decisions/storage_strategy.md)
+  * [Management Plane Design](02-decisions/management_plane_design.md)
   * [Trade-offs & Compromises](02-decisions/tradeoffs_compromises.md)
 * [03-Infrastructure](03-infrastructure/README.md)
   * [Firewall PC Details](03-infrastructure/firewall_pc.md)
+  * [Management/Utility Host Details](03-infrastructure/management_utility_host.md)
   * [Kubernetes Master Nodes (Dell Micros)](03-infrastructure/k8s_masters.md)
+  * [Kubernetes Worker Nodes (HP EliteDesk)](03-infrastructure/k8s_worker_hp.md)
   * [Kubernetes Worker Nodes (Dell Micros)](03-infrastructure/k8s_workers_dell.md)
-  * [Kubernetes Worker Node (HP EliteDesk)](03-infrastructure/k8s_worker_hp.md)
-  * [Kubernetes Worker Node (Lenovo M720s)](03-infrastructure/k8s_worker_lenovo.md)
   * [Dedicated NAS Server (Apple Tower)](03-infrastructure/nas_server.md)
   * [Managed Switch Details](03-infrastructure/managed_switch.md)
   * [Repurposed Wi-Fi APs](03-infrastructure/repurposed_wifi_aps.md)
@@ -28,25 +29,29 @@ This document serves as the main entry point for navigating the Home Lab Project
   * [Core Kubernetes Components](04-platform/core_components.md)
   * [High Availability Design](04-platform/high_availability_design.md)
 * [05-Software](05-software/README.md)
-  * [Operating System (Nodes)](05-software/os_nodes.md)
   * [Firewall OS (OPNsense)](05-software/opnsense.md)
-  * [Distributed Storage (Rook/Ceph)](05-software/rook_ceph.md)
+  * [Management Host OS (Proxmox VE)](05-software/proxmox_ve.md)
+  * [Kubernetes OS (Talos Linux)](05-software/talos_linux.md)
   * [NAS OS (TrueNAS SCALE)](05-software/truenas_scale.md)
+  * [Cluster Management (Omni)](05-software/omni.md)
+  * [Distributed Storage (Rook/Ceph)](05-software/rook_ceph.md)
   * [Monitoring (Prometheus/Grafana)](05-software/monitoring.md)
   * [Logging (Loki/Fluentd)](05-software/logging.md)
   * [Reverse Proxy (HAProxy/Ingress)](05-software/reverse_proxy.md)
-  * [DNS (OPNsense Unbound/Pi-hole)](05-software/dns.md)
+  * [DNS (OPNsense Unbound/AdGuard Home)](05-software/dns.md)
   * [Applications & Services (Plex, Nextcloud, DBs)](05-software/applications.md)
+  * [Dashboard (HomePage)](05-software/homepage.md)
 * [06-Network](06-network/README.md)
   * [Physical Network Topology Diagram](06-network/physical_topology.md)
   * [Logical Network Diagram (VLANs)](06-network/logical_topology_vlans.md)
   * [IP Addressing Scheme](06-network/ip_addressing_scheme.md)
+  * [OPNsense GUI WAN PPPoE Setup](06-network/opnsense_gui_wan_pppoe_setup.md)
+  * [OPNsense Initial Web GUI Setup & Network Readiness](06-network/opnsense_initial_web_gui_setup.md)
+  * [VPN Setup (OPNsense)](06-network/vpn_setup.md)
   * [VLAN Configuration (OPNsense)](06-network/opnsense_vlans.md)
   * [VLAN Configuration (Managed Switch)](06-network/switch_vlans.md)
   * [Firewall Rules (OPNsense)](06-network/opnsense_firewall_rules.md)
   * [DHCP & DNS Configuration](06-network/dhcp_dns.md)
-  * [VPN Setup (OPNsense)](06-network/vpn_setup.md)
-  * [OPNsense GUI WAN PPPoE Setup](06-network/opnsense_gui_wan_pppoe_setup.md)
 * [07-Storage](07-storage/README.md)
   * [Ceph Cluster Design](07-storage/ceph_cluster_design.md)
   * [Rook Deployment on Kubernetes](07-storage/rook_deployment.md)
@@ -62,6 +67,9 @@ This document serves as the main entry point for navigating the Home Lab Project
   * [OPNsense Official Documentation](09-docs/opnsense_docs.md)
   * [Kubernetes Official Documentation](09-docs/kubernetes_docs.md)
   * [Rook/Ceph Official Documentation](09-docs/rook_ceph_docs.md)
+  * [TrueNAS Official Documentation](09-docs/truenas_docs.md)
+  * [Proxmox Official Documentation](09-docs/proxmox_docs.md)
+  * [Omni Official Documentation](09-docs/omni_docs.md)
   * [Hardware Manuals & Drivers](09-docs/hardware_manuals.md)
 * [10-Architecture](10-architecture/README.md)
   * [High-Level Architectural View](10-architecture/high_level_view.md)
@@ -70,3 +78,5 @@ This document serves as the main entry point for navigating the Home Lab Project
   * [Scalability & Resilience Design](10-architecture/scalability_resilience.md)
 
 ---
+
+## [Tasks](tasks.md)
