@@ -84,5 +84,3 @@ Through this homelab, I aim to demonstrate the ability to **design, implement, a
 > "Build like you run production, learn like it’s your sandbox. Document everything."
 
 This README serves as your high-level executive summary, providing a quick, compelling overview. All the rich details, justifications, configuration steps, and `llnotes/` will reside within the `docs/` folder, accessible to anyone who wants to "dive deeper" without cluttering this top-level overview.
-
-This is a much better structure for a public-facing repository!
