@@ -26,11 +26,9 @@ spec:
             useAllDevices: false
             nodes:
               - name: "k8s-w-1"
-                devices:
-                  - name: "nvme0n1"
+                devices: [{name: "nvme0n1"}]
               - name: "k8s-w-2"
-                devices:
-                  - name: "nvme0n1"
+                devices: [{name: "nvme0n1"}]
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
