@@ -29,6 +29,8 @@ spec:
                 devices: [{name: "nvme0n1"}]
               - name: "k8s-w-2"
                 devices: [{name: "nvme0n1"}]
+              - name: "k8s-w-3"
+                devices: []
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
