@@ -5,7 +5,8 @@ metadata:
   namespace: rook-ceph
 spec:
   entryPoints:
-    - web
+    - web        # For HTTP → HTTPS redirect
+    - websecure  # For HTTPS traffic
   routes:
     - match: Host(`ceph.home.lab`)
       kind: Rule
@@ -15,4 +16,6 @@ spec:
       middlewares:
         - name: ceph-dashboard-https-redirect
           namespace: rook-ceph
+  tls:
+    secretName: ceph-home-lab-tls   # Must exist in rook-ceph namespace
 
