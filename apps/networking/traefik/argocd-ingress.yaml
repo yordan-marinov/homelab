@@ -7,8 +7,9 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`argocd.home.lab`)
+    - match: Host(`argocd.home.lab`) && PathPrefix(`/`)
       kind: Rule
       services:
         - name: argocd-server
-          port: 80 # ArgoCD server listens on 80 and 443 internally
+          port: 80
+
