@@ -10,6 +10,9 @@ spec:
     - match: Host(`ceph.home.lab`)
       kind: Rule
       services:
-        - name: rook-ceph-mgr-dashboard   # Must match exactly
-          port: 8443                       # Must match the service port
+        - name: rook-ceph-mgr-dashboard
+          port: 8443
+      middlewares:
+        - name: ceph-dashboard-https-redirect
+          namespace: rook-ceph
 
