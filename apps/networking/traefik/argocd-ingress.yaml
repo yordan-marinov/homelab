@@ -4,12 +4,12 @@ metadata:
   name: argocd
   namespace: argocd
 spec:
-  entryPoints:
-    - web
-    - websecure
   routes:
     - match: Host(`argocd.home.lab`) && PathPrefix(`/`)
       kind: Rule
+      middlewares:
+        - name: argocd-headers
+          namespace: argocd
       services:
         - name: argocd-server
           port: 80
