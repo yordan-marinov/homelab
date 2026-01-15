@@ -8,7 +8,7 @@ spec:
   source:
     chart: rook-ceph-cluster
     repoURL: https://charts.rook.io/release
-    targetRevision: v1.15.5
+    targetRevision: 1.15.5
     helm:
       values: |
         operatorNamespace: rook-ceph
@@ -24,10 +24,9 @@ spec:
 
           mgr:
             count: 1
-
-          dashboard:
-            enabled: true
-            ssl: false
+            dashboard:
+              enabled: true
+              ssl: false
 
           crashCollector:
             disable: false
@@ -98,3 +97,30 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+    ignoreDifferences:
+      # Ignore Secrets (dashboard token, internal keys)
+      - kind: Secret
+        jsonPointers:
+          - /data
+      # Ignore runtime config changes
+      - kind: ConfigMap
+        jsonPointers:
+          - /data
+      # Ignore dynamic status of Ceph CRDs
+      - group: ceph.rook.io
+        kind: CephCluster
+        jsonPointers:
+          - /status
+      - group: ceph.rook.io
+        kind: CephFilesystem
+        jsonPointers:
+          - /status
+      - group: ceph.rook.io
+        kind: CephBlockPool
+        jsonPointers:
+          - /status
+      - group: ceph.rook.io
+        kind: CephObjectStore
+        jsonPointers:
+          - /status
+
