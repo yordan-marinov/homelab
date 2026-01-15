@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-release
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: traefik
+    repoURL: https://traefik.github.io/charts
+    targetRevision: 33.2.1
+    helm:
+      values: |
+        service:
+          enabled: true
+          type: LoadBalancer
+          annotations:
+            # This tells MetalLB to use this specific IP
+            metallb.universe.tf/loadBalancerIPs: 192.168.111.50
+
+        # Enable the Dashboard internally
+        ingressRoute:
+          dashboard:
+            enabled: true
+
+        # Resource limits for your Dell nodes
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
