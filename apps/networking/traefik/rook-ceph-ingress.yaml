@@ -5,17 +5,14 @@ metadata:
   namespace: rook-ceph
 spec:
   entryPoints:
-    - web        # For HTTP → HTTPS redirect
-    - websecure  # For HTTPS traffic
+    - web        # HTTP only
   routes:
     - match: Host(`ceph.home.lab`)
       kind: Rule
       services:
-        - name: rook-ceph-mgr-dashboard
-          port: 8443
+        - name: rook-ceph-mgr-dashboard   # Must match the service name
+          port: 8443                      # Service port
       middlewares:
-        - name: ceph-dashboard-https-redirect
+        - name: ceph-dashboard-headers
           namespace: rook-ceph
-  tls:
-    secretName: ceph-home-lab-tls   # Must exist in rook-ceph namespace
 

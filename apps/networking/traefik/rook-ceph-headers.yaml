@@ -1,10 +1,11 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: ceph-dashboard-https-redirect
+  name: ceph-dashboard-headers
   namespace: rook-ceph
 spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
+  headers:
+    # Forward proto so Ceph dashboard doesn’t get confused with redirects
+    customRequestHeaders:
+      X-Forwarded-Proto: http
 
