@@ -5,14 +5,11 @@ metadata:
   namespace: rook-ceph
 spec:
   entryPoints:
-    - web        # HTTP only
+    - web               # HTTP only
   routes:
     - match: Host(`ceph.home.lab`)
       kind: Rule
       services:
-        - name: rook-ceph-mgr-dashboard   # Must match the service name
-          port: 8443                      # Service port
-      middlewares:
-        - name: ceph-dashboard-headers
-          namespace: rook-ceph
+        - name: rook-ceph-mgr-dashboard   # Must match the service name exactly
+          port: 8443                      # Must match the service port
 
