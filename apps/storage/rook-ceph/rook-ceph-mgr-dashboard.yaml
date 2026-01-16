@@ -1,13 +1,16 @@
-apiVersion: v1
-kind: Service
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
 metadata:
-  name: rook-ceph-mgr-dashboard
+  name: rook-ceph-dashboard
   namespace: rook-ceph
 spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8443
-  selector:
-    app: rook-ceph-mgr
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`ceph.home.lab`)
+      kind: Rule
+      services:
+        - name: rook-ceph-mgr-dashboard
+          port: https-dashboard
+          scheme: http
 
