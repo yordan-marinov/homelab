@@ -13,31 +13,12 @@ spec:
       labels:
         app: rook-ceph-tools
     spec:
-      serviceAccountName: rook-ceph-tools
+      serviceAccountName: rook-ceph-system
       containers:
         - name: rook-ceph-tools
-          image: docker.io/rook/ceph:v1.15.5
-          imagePullPolicy: IfNotPresent
-          command: ["/tini"]
-          args: ["--", "/usr/local/bin/toolbox.sh"]
-          securityContext:
-            privileged: true
-          env:
-            - name: ROOK_CEPH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+          image: quay.io/ceph/ceph:v19.2.0
+          command: ["/bin/bash", "-c", "--"]
+          args: ["sleep infinity"]
           tty: true
           stdin: true
-          volumeMounts:
-            - name: ceph-config
-              mountPath: /etc/ceph
-            - name: ceph-mon-endpoint
-              mountPath: /etc/rook
-      volumes:
-        - name: ceph-config
-          emptyDir: {}
-        - name: ceph-mon-endpoint
-          configMap:
-            name: rook-ceph-mon-endpoints
 
