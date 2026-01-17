@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rook-ceph-tools
+  namespace: rook-ceph
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rook-ceph-tools
+  template:
+    metadata:
+      labels:
+        app: rook-ceph-tools
+    spec:
+      serviceAccountName: rook-ceph-tools
+      containers:
+        - name: rook-ceph-tools
+          image: rook/ceph:v1.11.16
+          command: ["/tini"]
+          args: ["--", "/usr/local/bin/toolbox.sh"]
+          env:
+            - name: ROOK_CEPH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          tty: true
+          stdin: true
+
