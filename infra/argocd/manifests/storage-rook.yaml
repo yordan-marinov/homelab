@@ -1,14 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rook-ceph-operator
+  name: rook-ceph-stack
   namespace: argocd
 spec:
   project: default
   source:
-    chart: rook-ceph
-    repoURL: https://charts.rook.io/release
-    targetRevision: 1.15.5
+    repoURL: https://github.com/yordan-marinov/homelab.git
+    targetRevision: HEAD
+    path: apps/storage/rook-ceph
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
@@ -18,11 +20,4 @@ spec:
       selfHeal: false
     syncOptions:
       - CreateNamespace=true
-    ignoreDifferences:
-      - kind: Secret
-        jsonPointers:
-          - /data
-      - kind: ConfigMap
-        jsonPointers:
-          - /data
 

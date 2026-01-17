@@ -15,22 +15,17 @@ spec:
         cephClusterSpec:
           cephVersion:
             image: quay.io/ceph/ceph:v19.2.0
-
           dataDirHostPath: /var/lib/rook
-
           mon:
             count: 3
             allowMultiplePerNode: false
-
           mgr:
             count: 1
             dashboard:
               enabled: true
-              ssl: false
-
+              ssl: true
           crashCollector:
             disable: false
-
           resources:
             mgr:
               limits:
@@ -68,7 +63,6 @@ spec:
               requests:
                 cpu: "10m"
                 memory: "32Mi"
-
           storage:
             useAllNodes: false
             useAllDevices: false
@@ -81,32 +75,24 @@ spec:
               - name: "k8s-w-2"
                 devices:
                   - name: "nvme0n1"
-              - name: "k8s-w-3"
-                devices: []
-
           priorityClassNames:
             all: system-node-critical
-
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
-
   syncPolicy:
     automated:
       prune: true
-      selfHeal: true
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
     ignoreDifferences:
-      # Ignore Secrets (dashboard token, internal keys)
       - kind: Secret
         jsonPointers:
           - /data
-      # Ignore runtime config changes
       - kind: ConfigMap
         jsonPointers:
           - /data
-      # Ignore dynamic status of Ceph CRDs
       - group: ceph.rook.io
         kind: CephCluster
         jsonPointers:

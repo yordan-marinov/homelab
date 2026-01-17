@@ -5,7 +5,7 @@ metadata:
   namespace: rook-ceph
 spec:
   entryPoints:
-    - web
+    - websecure
   routes:
     - match: Host(`ceph.home.lab`)
       kind: Rule
