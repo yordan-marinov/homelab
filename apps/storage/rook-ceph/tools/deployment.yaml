@@ -17,6 +17,7 @@ spec:
       containers:
         - name: rook-ceph-tools
           image: rook/ceph:v1.11.16
+          imagePullPolicy: IfNotPresent
           command: ["/tini"]
           args: ["--", "/usr/local/bin/toolbox.sh"]
           env:
@@ -26,4 +27,6 @@ spec:
                   fieldPath: metadata.namespace
           tty: true
           stdin: true
+      imagePullSecrets:
+        - name: regcred
 
