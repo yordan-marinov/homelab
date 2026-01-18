@@ -13,11 +13,10 @@ spec:
       labels:
         app: rook-ceph-tools
     spec:
-      serviceAccountName: rook-ceph-system
+      serviceAccountName: rook-ceph-tools
       containers:
         - name: rook-ceph-tools
           image: quay.io/ceph/ceph:v19.2.0
-          imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "-c", "--"]
           args: ["sleep infinity"]
           tty: true
@@ -32,7 +31,10 @@ spec:
       volumes:
         - name: ceph-conf
           configMap:
-            name: rook-ceph-mon-endpoints
+            name: rook-ceph-ceph-conf
+            items:
+              - key: ceph.conf
+                path: ceph.conf
         - name: ceph-client-admin
           secret:
             secretName: rook-ceph-admin-keyring
