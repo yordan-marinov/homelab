@@ -17,13 +17,15 @@ spec:
       containers:
         - name: rook-ceph-tools
           image: quay.io/ceph/ceph:v19.2.0
+          imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "-c", "--"]
           args: ["sleep infinity"]
           tty: true
           stdin: true
           volumeMounts:
             - name: ceph-conf
-              mountPath: /etc/ceph
+              mountPath: /etc/ceph/ceph.conf
+              subPath: ceph.conf
             - name: ceph-client-admin
               mountPath: /etc/ceph/keyring
               subPath: keyring
