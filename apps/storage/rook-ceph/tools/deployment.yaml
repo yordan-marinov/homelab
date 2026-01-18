@@ -4,7 +4,7 @@ metadata:
   name: rook-ceph-tools
   namespace: rook-ceph
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: rook-ceph-tools
@@ -13,7 +13,7 @@ spec:
       labels:
         app: rook-ceph-tools
     spec:
-      serviceAccountName: rook-ceph-system   # matches existing SA
+      serviceAccountName: rook-ceph-system
       containers:
         - name: rook-ceph-tools
           image: quay.io/ceph/ceph:v19.2.0
@@ -30,7 +30,7 @@ spec:
       volumes:
         - name: ceph-conf
           configMap:
-            name: rook-ceph-mon-endpoints  # matches your existing CM
+            name: rook-ceph-mon-endpoints
         - name: ceph-client-admin
           secret:
             secretName: rook-ceph-admin-keyring
