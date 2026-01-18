@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: rook-ceph-tools
   namespace: rook-ceph
-  labels:
-    app: rook-ceph-tools
 spec:
   replicas: 1
   selector:
@@ -15,20 +13,24 @@ spec:
       labels:
         app: rook-ceph-tools
     spec:
-      serviceAccountName: rook-ceph-system
+      serviceAccountName: rook-ceph-tools
       containers:
         - name: rook-ceph-tools
-          image: quay.io/ceph/ceph:v19.2.0
+          image: ceph/ceph:v19.2.0
           command: ["/bin/bash", "-c", "--"]
           args: ["sleep infinity"]
           tty: true
           stdin: true
           volumeMounts:
-            # Only mount the admin keyring
+            - name: ceph-conf
+              mountPath: /etc/ceph
             - name: ceph-client-admin
               mountPath: /etc/ceph/keyring
               subPath: keyring
       volumes:
+        - name: ceph-conf
+          configMap:
+            name: rook-ceph-ceph-conf
         - name: ceph-client-admin
           secret:
             secretName: rook-ceph-admin-keyring
