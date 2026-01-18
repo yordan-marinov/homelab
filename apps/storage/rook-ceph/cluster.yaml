@@ -15,17 +15,30 @@ spec:
         cephClusterSpec:
           cephVersion:
             image: quay.io/ceph/ceph:v19.2.0
+
+          cephConfig:
+            global:
+              auth_cluster_required: cephx
+              auth_service_required: cephx
+              auth_client_required: cephx
+              ms_bind_msgr2: true
+              ms_bind_msgr1: true
+
           dataDirHostPath: /var/lib/rook
+
           mon:
             count: 3
             allowMultiplePerNode: false
+
           mgr:
             count: 1
             dashboard:
               enabled: true
               ssl: true
+
           crashCollector:
             disable: false
+
           resources:
             mgr:
               limits:
@@ -63,6 +76,7 @@ spec:
               requests:
                 cpu: "10m"
                 memory: "32Mi"
+
           storage:
             useAllNodes: false
             useAllDevices: false
@@ -75,11 +89,14 @@ spec:
               - name: "k8s-w-2"
                 devices:
                   - name: "nvme0n1"
+
           priorityClassNames:
             all: system-node-critical
+
   destination:
     server: https://kubernetes.default.svc
     namespace: rook-ceph
+
   syncPolicy:
     automated:
       prune: true
