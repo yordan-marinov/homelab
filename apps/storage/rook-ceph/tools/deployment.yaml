@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: rook-ceph-tools
   namespace: rook-ceph
+  labels:
+    app: rook-ceph-tools
 spec:
   replicas: 1
   selector:
@@ -22,18 +24,11 @@ spec:
           tty: true
           stdin: true
           volumeMounts:
-            - name: ceph-conf
-              mountPath: /etc/ceph
+            # Only mount the admin keyring
             - name: ceph-client-admin
               mountPath: /etc/ceph/keyring
               subPath: keyring
       volumes:
-        - name: ceph-conf
-          configMap:
-            name: rook-ceph-mon-endpoints
-            items:
-              - key: ceph.conf
-                path: ceph.conf
         - name: ceph-client-admin
           secret:
             secretName: rook-ceph-admin-keyring
