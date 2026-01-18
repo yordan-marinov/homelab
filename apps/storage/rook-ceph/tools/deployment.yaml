@@ -16,9 +16,14 @@ spec:
       serviceAccountName: rook-ceph-system
       containers:
         - name: rook-ceph-tools
-          image: quay.io/ceph/ceph:v19.2.0
-          command: ["/bin/bash", "-c", "--"]
-          args: ["sleep infinity"]
+          image: docker.io/rook/ceph:v1.15.5
+          command: ["/tini"]
+          args: ["--", "/usr/local/bin/toolbox.sh"]
+          env:
+            - name: ROOK_CEPH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           tty: true
           stdin: true
           volumeMounts:
