@@ -21,8 +21,8 @@ spec:
               auth_cluster_required: cephx
               auth_service_required: cephx
               auth_client_required: cephx
-              ms_bind_msgr2: true
-              ms_bind_msgr1: true
+              ms_bind_msgr2: "true"
+              ms_bind_msgr1: "true"
 
           dataDirHostPath: /var/lib/rook
 
