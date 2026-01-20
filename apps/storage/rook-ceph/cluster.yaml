@@ -18,9 +18,13 @@ spec:
 
           cephConfig:
             global:
+              osd_pool_default_size: "2"
+              osd_pool_default_min_size: "1"
+
               auth_cluster_required: cephx
               auth_service_required: cephx
               auth_client_required: cephx
+
               ms_bind_msgr2: "true"
               ms_bind_msgr1: "true"
 
