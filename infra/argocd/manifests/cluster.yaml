@@ -16,71 +16,95 @@ spec:
           cephVersion:
             image: quay.io/ceph/ceph:v19.2.0
 
+          # 1. Global Settings for 2-Node Cluster
           cephConfig:
             global:
               osd_pool_default_size: "2"
               osd_pool_default_min_size: "1"
-
-              auth_cluster_required: cephx
-              auth_service_required: cephx
-              auth_client_required: cephx
-
-              ms_bind_msgr2: "true"
-              ms_bind_msgr1: "true"
+              mon_allow_pool_delete: "true" # Allows GitOps to clean up deleted pools
 
           dataDirHostPath: /var/lib/rook
 
           mon:
             count: 3
-            allowMultiplePerNode: true
+            allowMultiplePerNode: false # Spread brains across all 3 workers
 
           mgr:
             count: 1
             dashboard:
               enabled: true
-              ssl: true
+              ssl: false # Using HTTP internally; Traefik handles HTTPS
+
+          # 2. Block Storage (RBD) for Databases/Kafka
+          cephBlockPools:
+            - name: replicapool
+              spec:
+                failureDomain: host
+                replicated:
+                  size: 2
+                  requireSafeReplica: false
+              storageClass:
+                enabled: true
+                name: ceph-block
+                isDefault: true
+                reclaimPolicy: Delete
+                allowVolumeExpansion: true
+
+          # 3. Shared Filesystem (CephFS) for Media/Sync
+          cephFilesystems:
+            - name: ceph-filesystem
+              spec:
+                metadataPool:
+                  replicated:
+                    size: 2
+                dataPools:
+                  - name: data0
+                    failureDomain: host
+                    replicated:
+                      size: 2
+                metadataServer:
+                  activeCount: 1
+                  activeStandby: true
+              storageClass:
+                enabled: true
+                name: ceph-filesystem
+                reclaimPolicy: Delete
+                allowVolumeExpansion: true
+
+          # 4. Object Store (S3/RGW) - REFACTORED TO REPLICATED
+          cephObjectStores:
+            - name: ceph-objectstore
+              spec:
+                metadataPool:
+                  replicated:
+                    size: 2
+                dataPool:
+                  replicated:
+                    size: 2 # No Erasure Coding until 3rd disk arrives
+                gateway:
+                  port: 80
+                  instances: 1
+              storageClass:
+                enabled: true
+                name: ceph-bucket
+                reclaimPolicy: Delete
 
           crashCollector:
             disable: false
 
+          # 5. Resource Limits for Dell Micros
           resources:
             mgr:
-              limits:
-                memory: "512Mi"
-              requests:
-                cpu: "100m"
-                memory: "256Mi"
+              limits: { memory: "512Mi" }
+              requests: { cpu: "100m", memory: "256Mi" }
             mon:
-              limits:
-                memory: "1024Mi"
-              requests:
-                cpu: "100m"
-                memory: "512Mi"
+              limits: { memory: "1024Mi" }
+              requests: { cpu: "100m", memory: "512Mi" }
             osd:
-              limits:
-                memory: "2Gi"
-              requests:
-                cpu: "200m"
-                memory: "1Gi"
-            prepareosd:
-              limits:
-                memory: "400Mi"
-              requests:
-                cpu: "100m"
-                memory: "200Mi"
-            crashcollector:
-              limits:
-                memory: "64Mi"
-              requests:
-                cpu: "10m"
-                memory: "32Mi"
-            cleanup:
-              limits:
-                memory: "64Mi"
-              requests:
-                cpu: "10m"
-                memory: "32Mi"
+              limits: { memory: "2Gi" }
+              requests: { cpu: "200m", memory: "1Gi" }
 
+          # 6. Physical Drive Mapping
           storage:
             useAllNodes: false
             useAllDevices: false
@@ -88,11 +112,11 @@ spec:
               osdsPerDevice: "1"
             nodes:
               - name: "k8s-w-1"
-                devices:
-                  - name: "nvme0n1"
+                devices: [{name: "nvme1n1"}] # Your 2TB Crucial P3
               - name: "k8s-w-2"
-                devices:
-                  - name: "nvme0n1"
+                devices: [{name: "nvme0n1"}] # Your 2TB Samsung 990
+              - name: "k8s-w-3"
+                devices: [] # Brain only, no disk
 
           priorityClassNames:
             all: system-node-critical
@@ -104,30 +128,14 @@ spec:
   syncPolicy:
     automated:
       prune: true
-      selfHeal: false
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
     ignoreDifferences:
       - kind: Secret
-        jsonPointers:
-          - /data
+        jsonPointers: [/data]
       - kind: ConfigMap
-        jsonPointers:
-          - /data
+        jsonPointers: [/data]
       - group: ceph.rook.io
         kind: CephCluster
-        jsonPointers:
-          - /status
-      - group: ceph.rook.io
-        kind: CephFilesystem
-        jsonPointers:
-          - /status
-      - group: ceph.rook.io
-        kind: CephBlockPool
-        jsonPointers:
-          - /status
-      - group: ceph.rook.io
-        kind: CephObjectStore
-        jsonPointers:
-          - /status
-
+        jsonPointers: [/status]
