@@ -18,7 +18,9 @@ spec:
           image: vaultwarden/server:latest
           env:
             - name: SIGNUPS_ALLOWED
-              value: "true" # Enable this so you can create your first account
+              value: "false"
+            - name: DOMAIN
+              value: "https://vault.mvgates.com"
           volumeMounts:
             - name: data
               mountPath: /data
