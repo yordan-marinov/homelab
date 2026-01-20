@@ -3,11 +3,16 @@ kind: IngressRoute
 metadata:
   name: vaultwarden-web
   namespace: vaultwarden
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
-  entryPoints: [web]
+  entryPoints:
+    - websecure
   routes:
-    - match: Host(`vault.home.lab`)
+    - match: Host(`vault.mvgates.com`)
       kind: Rule
       services:
         - name: vaultwarden-service
           port: 80
+  tls:
+    secretName: vault-mvgates-tls
