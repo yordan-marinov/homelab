@@ -21,6 +21,11 @@ spec:
               value: "false"
             - name: DOMAIN
               value: "https://vault.mvgates.com"
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretsKeyRef:
+                  name: vaultwarden-admin-vars
+                  key: admin-token
           volumeMounts:
             - name: data
               mountPath: /data
