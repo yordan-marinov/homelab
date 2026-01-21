@@ -23,7 +23,7 @@ spec:
               value: "https://vault.mvgates.com"
             - name: ADMIN_TOKEN
               valueFrom:
-                secretsKeyRef:
+                secretKeyRef:
                   name: vaultwarden-admin-vars
                   key: admin-token
           volumeMounts:
