@@ -1,23 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: infisical-release
+  name: infisical-stack
   namespace: argocd
 spec:
   project: default
   source:
     chart: infisical-standalone
-    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/v1/repo/
-    targetRevision: 2.1.2
+    repoURL: https://charts.infisical.com
+    targetRevision: 2.1.1
     helm:
       values: |
         backend:
-          # Link to the manual secrets we made in Step 1
           existingSecret: infisical-secrets
           encryptionKeySecretKey: encryption-key
           jwtSecretSecretKey: jwt-secret
 
-        # Configure persistence on your Ceph Cluster
         postgresql:
           enabled: true
           primary:
@@ -34,7 +32,6 @@ spec:
               storageClass: ceph-block
               size: 2Gi
 
-        # The Ingress for Traefik + Cert-Manager
         ingress:
           enabled: true
           annotations:
@@ -52,3 +49,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: infisical
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
