@@ -7,9 +7,8 @@ spec:
   project: default
   source:
     chart: infisical-standalone
-    # This is the specific URL for the STANDALONE chart
-    repoURL: https://dl.cloudsmith.io/public/infisical/infisical-standalone/helm/v1/repo/
-    targetRevision: 2.1.1 # This is the current stable Chart version
+    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+    targetRevision: 2.1.1
     helm:
       values: |
         backend:
@@ -17,7 +16,6 @@ spec:
           encryptionKeySecretKey: encryption-key
           jwtSecretSecretKey: jwt-secret
 
-        # We manually set the Image Tag you found
         image:
           tag: "v0.156.3"
 
