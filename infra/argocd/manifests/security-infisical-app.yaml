@@ -18,6 +18,7 @@ spec:
           existingSecret: infisical-secrets
           encryptionKeySecretKey: encryption-key
           jwtSecretSecretKey: jwt-secret
+          authSecretSecretKey: auth-secret
           siteUrl: https://secrets.mvgates.com
 
         postgresql:
