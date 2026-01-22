@@ -1,16 +1,56 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: infisical-stack
+  name: infisical-app
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/yordan-marinov/homelab.git
-    targetRevision: HEAD
-    path: apps/security/infisical
-    directory:
-      recurse: true
+    chart: infisical-standalone
+    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
+    targetRevision: 2.1.1
+    helm:
+      values: |
+        backend:
+          existingSecret: infisical-secrets
+          encryptionKeySecretKey: encryption-key
+          jwtSecretSecretKey: jwt-secret
+          # Essential for Infisical to boot correctly:
+          siteUrl: https://secrets.mvgates.com
+
+        image:
+          tag: "v0.156.3"
+
+        postgresql:
+          enabled: true
+          primary:
+            persistence:
+              enabled: true
+              storageClass: ceph-block
+              size: 10Gi
+
+        redis:
+          enabled: true
+          master:
+            persistence:
+              enabled: true
+              storageClass: ceph-block
+              size: 2Gi
+
+        ingress:
+          enabled: true
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            cert-manager.io/cluster-issuer: letsencrypt-production
+          hosts:
+            - host: secrets.mvgates.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls:
+            - secretName: secrets-mvgates-tls
+              hosts:
+                - secrets.mvgates.com
   destination:
     server: https://kubernetes.default.svc
     namespace: infisical
