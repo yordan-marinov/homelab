@@ -7,7 +7,8 @@ spec:
   project: default
   source:
     chart: infisical-standalone
-    repoURL: https://charts.infisical.com
+    # Exact URL from the official Infisical Helm documentation
+    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/v1/repo/
     targetRevision: 2.1.1
     helm:
       values: |
