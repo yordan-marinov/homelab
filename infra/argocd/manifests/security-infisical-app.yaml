@@ -11,20 +11,18 @@ spec:
     targetRevision: 1.7.2
     helm:
       values: |
-        image:
-          tag: "v0.156.3"
+        infisical:
+          # Use the image version you verified
+          image:
+            tag: "v0.156.3"
 
-        backend:
-          existingSecret: infisical-secrets
-          encryptionKeySecretKey: encryption-key
-          jwtSecretSecretKey: jwt-secret
-          siteUrl: https://secrets.mvgates.com
-          extraEnv:
-            - name: AUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: infisical-secrets
-                  key: auth-secret
+          kubeSecretRef: "infisical-secrets"
+
+          resources:
+            limits:
+              memory: 1000Mi
+            requests:
+              cpu: 200m
 
         postgresql:
           enabled: true
@@ -42,19 +40,15 @@ spec:
               storageClass: ceph-block
               size: 2Gi
 
-        ingress-nginx:
-          enabled: false
-
         ingress:
           enabled: true
+          ingressClassName: traefik
+          nginx:
+            enabled: false
           annotations:
             traefik.ingress.kubernetes.io/router.entrypoints: websecure
             cert-manager.io/cluster-issuer: letsencrypt-production
-          hosts:
-            - host: secrets.mvgates.com
-              paths:
-                - path: /
-                  pathType: ImplementationSpecific
+          hostName: secrets.mvgates.com
           tls:
             - secretName: secrets-mvgates-tls
               hosts:
