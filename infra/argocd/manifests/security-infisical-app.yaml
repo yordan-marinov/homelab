@@ -12,17 +12,9 @@ spec:
     helm:
       values: |
         infisical:
-          # Use the image version you verified
           image:
             tag: "v0.156.3"
-
           kubeSecretRef: "infisical-secrets"
-
-          resources:
-            limits:
-              memory: 1000Mi
-            requests:
-              cpu: 200m
 
         postgresql:
           enabled: true
@@ -40,19 +32,11 @@ spec:
               storageClass: ceph-block
               size: 2Gi
 
+        ingress-nginx:
+          enabled: false
+
         ingress:
-          enabled: true
-          ingressClassName: traefik
-          nginx:
-            enabled: false
-          annotations:
-            traefik.ingress.kubernetes.io/router.entrypoints: websecure
-            cert-manager.io/cluster-issuer: letsencrypt-production
-          hostName: secrets.mvgates.com
-          tls:
-            - secretName: secrets-mvgates-tls
-              hosts:
-                - secrets.mvgates.com
+          enabled: false
 
   destination:
     server: https://kubernetes.default.svc
