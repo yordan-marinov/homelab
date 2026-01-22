@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
     chart: infisical-standalone
-    targetRevision: 2.*.*
+    targetRevision: 1.7.2
     helm:
       values: |
         backend:
@@ -17,6 +17,7 @@ spec:
           jwtSecretSecretKey: jwt-secret
           siteUrl: https://secrets.mvgates.com
 
+        # This is the software version we found earlier
         image:
           tag: "v0.156.3"
 
