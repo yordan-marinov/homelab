@@ -6,16 +6,15 @@ metadata:
 spec:
   project: default
   source:
-    chart: infisical-standalone
     repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
-    targetRevision: 2.1.1
+    chart: infisical-standalone
+    targetRevision: 2.*.*
     helm:
       values: |
         backend:
           existingSecret: infisical-secrets
           encryptionKeySecretKey: encryption-key
           jwtSecretSecretKey: jwt-secret
-          # Essential for Infisical to boot correctly:
           siteUrl: https://secrets.mvgates.com
 
         image:
