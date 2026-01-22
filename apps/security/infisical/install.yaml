@@ -1,21 +1,25 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: infisical-stack
+  name: infisical-release
   namespace: argocd
 spec:
   project: default
   source:
     chart: infisical-standalone
-    # Exact URL from the official Infisical Helm documentation
-    repoURL: https://dl.cloudsmith.io/public/infisical/helm-charts/helm/v1/repo/
-    targetRevision: 2.1.1
+    # This is the specific URL for the STANDALONE chart
+    repoURL: https://dl.cloudsmith.io/public/infisical/infisical-standalone/helm/v1/repo/
+    targetRevision: 2.1.1 # This is the current stable Chart version
     helm:
       values: |
         backend:
           existingSecret: infisical-secrets
           encryptionKeySecretKey: encryption-key
           jwtSecretSecretKey: jwt-secret
+
+        # We manually set the Image Tag you found
+        image:
+          tag: "v0.156.3"
 
         postgresql:
           enabled: true
