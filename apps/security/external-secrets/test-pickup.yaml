@@ -1,0 +1,16 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: hand-shake-test
+  namespace: default
+spec:
+  secretStoreRef:
+    name: infisical-store
+    kind: ClusterSecretStore
+  target:
+    name: vault-connection-success
+    creationPolicy: Owner
+  data:
+    - secretKey: my_secret_data
+      remoteRef:
+        key: INFISICAL_STATUS

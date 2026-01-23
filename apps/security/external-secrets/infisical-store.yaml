@@ -1,0 +1,19 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: infisical-store
+spec:
+  provider:
+    infisical:
+      # Use the internal K8s address for high-speed local traffic
+      url: http://infisical-app-infisical-standalone-infisical.infisical.svc.cluster.local:8080/api
+      auth:
+        universalAuth:
+          secretsRef:
+            clientId:
+              name: infisical-auth
+              key: client-id
+            clientSecret:
+              name: infisical-auth
+              key: client-secret
+            namespace: external-secrets
