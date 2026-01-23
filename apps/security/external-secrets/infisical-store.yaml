@@ -19,6 +19,6 @@ spec:
             namespace: external-secrets
 
       secretsScope:
-        projectSlug: homelab-cluster
+        projectSlug: homelab-cluster-z-u-bm
         environmentSlug: prod
         secretsPath: /
