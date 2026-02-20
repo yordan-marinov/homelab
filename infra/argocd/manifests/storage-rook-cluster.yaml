@@ -33,7 +33,7 @@ spec:
             count: 1
             dashboard:
               enabled: true
-              ssl: false # Using HTTP internally; Traefik handles HTTPS
+              ssl: true
 
           # 2. Block Storage (RBD) for Databases/Kafka
           cephBlockPools:
@@ -112,9 +112,9 @@ spec:
               osdsPerDevice: "1"
             nodes:
               - name: "k8s-w-1"
-                devices: [{name: "nvme1n1"}] # Your 2TB Crucial P3
+                devices: [{name: "nvme1n1"}] #2TB Crucial P3
               - name: "k8s-w-2"
-                devices: [{name: "nvme0n1"}] # Your 2TB Samsung 990
+                devices: [{name: "nvme0n1"}] #2TB Samsung 990
               - name: "k8s-w-3"
                 devices: [] # Brain only, no disk
 
