@@ -3,15 +3,16 @@ kind: IngressRoute
 metadata:
   name: rook-ceph-dashboard
   namespace: rook-ceph
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`ceph.home.lab`)
+    - match: Host(`ceph.mvgates.com`)
       kind: Rule
       services:
         - name: rook-ceph-mgr-dashboard
-          port: https-dashboard
-          scheme: https
-          serversTransport: rook-ceph-dashboard
-
+          port: 8080
+  tls:
+    secretName: ceph-dashboard-tls
