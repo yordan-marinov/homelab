@@ -13,6 +13,6 @@ spec:
         - name: ceph-dashboard-headers
       services:
         - name: rook-ceph-mgr-dashboard
-          port: 8080
+          port: 7000
   tls:
     secretName: ceph-dashboard-tls
