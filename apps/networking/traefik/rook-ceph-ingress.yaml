@@ -12,7 +12,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: rook-ceph-dashboard-gui
+  name: rook-ceph-dashboard-final
   namespace: rook-ceph
 spec:
   entryPoints:
