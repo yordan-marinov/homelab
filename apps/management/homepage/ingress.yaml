@@ -3,6 +3,8 @@ kind: IngressRoute
 metadata:
   name: homepage-web
   namespace: management
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   entryPoints: [websecure]
   routes:
