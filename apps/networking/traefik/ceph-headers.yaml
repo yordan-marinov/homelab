@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ceph-dashboard-headers
+  namespace: rook-ceph
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Host: "ceph.home.lab"
+    sslProxyHeaders:
+      X-Forwarded-Proto: "https"

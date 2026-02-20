@@ -9,6 +9,8 @@ spec:
   routes:
     - match: Host(`ceph.home.lab`)
       kind: Rule
+      middlewares:
+        - name: ceph-dashboard-headers
       services:
         - name: rook-ceph-mgr-dashboard
           port: 8080
