@@ -7,8 +7,25 @@ data:
   settings.yaml: |
     title: MvGates Cloud Console
     base_url: https://home.mvgates.com
-  kubernetes.yaml: |
-    mode: cluster
+    # This hides the 'help' and 'settings' icons for a cleaner look
+    layout:
+      Infrastructure:
+        style: columns
+        columns: 3
+
+  bookmarks.yaml: |
+    - My Lab:
+        - GitHub Repo:
+            - icon: github
+              href: https://github.com/yordan-marinov/homelab
+        - Obsidian Brainbox:
+            - icon: si-obsidian
+              href: https://your-obsidian-url.com
+    - Entertainment:
+        - YouTube:
+            - icon: youtube
+              href: https://youtube.com
+
   widgets.yaml: |
     - kubernetes:
         cluster: homelab
@@ -18,6 +35,10 @@ data:
         format:
           date: long
           time: short
+
+  kubernetes.yaml: |
+    mode: cluster
+
   services.yaml: |
     - Infrastructure:
         - OPNsense:
@@ -28,18 +49,33 @@ data:
               url: https://192.168.102.1
               key: "{{HOMEPAGE_VAR_OPNSENSE_KEY}}"
               secret: "{{HOMEPAGE_VAR_OPNSENSE_SECRET}}"
-    - Cluster:
+              verify: false
+        - WiFi AP:
+            icon: tp-link.png
+            href: http://wifi.home.lab
+        - Core Switch:
+            icon: d-link.png
+            href: http://kswitch.home.lab
+
+    - Cluster Management:
         - ArgoCD:
             icon: argocd.png
             href: https://argocd.home.lab
             widget:
               type: argocd
-              url: https://argocd.home.lab
+              url: http://argocd-server.argocd.svc.cluster.local
+              username: admin
               password: "{{HOMEPAGE_VAR_ARGO_PASSWORD}}"
+        - Traefik:
+            icon: traefik.png
+            href: https://traefik.home.lab/dashboard/
+
+    - High-Speed Storage:
         - Ceph:
             icon: ceph.png
             href: https://ceph.home.lab
             widget:
               type: rook
+              # Talking to the manager dashboard internally via K8s DNS
               url: http://rook-ceph-mgr-dashboard.rook-ceph.svc.cluster.local:8443
               password: "{{HOMEPAGE_VAR_CEPH_PASSWORD}}"
