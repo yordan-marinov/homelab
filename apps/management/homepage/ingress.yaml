@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: homepage-web
+  namespace: management
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`home.mvgates.com`)
+      kind: Rule
+      services:
+        - name: homepage-service
+          port: 80
+  tls:
+    secretName: homepage-tls

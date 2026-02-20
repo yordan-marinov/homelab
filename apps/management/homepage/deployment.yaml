@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage
+  namespace: management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homepage
+  template:
+    metadata:
+      labels:
+        app: homepage
+    spec:
+      containers:
+        - name: homepage
+          image: ghcr.io/gethomepage/homepage:latest
+          env:
+            - name: HOMEPAGE_VAR_OPNSENSE_KEY
+              valueFrom:
+                secretKeyRef: { name: homepage-secrets, key: opnsense_key }
+            - name: HOMEPAGE_VAR_OPNSENSE_SECRET
+              valueFrom:
+                secretKeyRef: { name: homepage-secrets, key: opnsense_secret }
+            - name: HOMEPAGE_VAR_ARGO_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: homepage-secrets, key: argo_password }
+            - name: HOMEPAGE_VAR_CEPH_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: homepage-secrets, key: ceph_password }
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+      volumes:
+        - name: config
+          configMap:
+            name: homepage-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homepage-service
+  namespace: management
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: homepage

@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: management
+data:
+  settings.yaml: |
+    title: MvGates Cloud Console
+    base_url: https://home.mvgates.com
+  # This defines the visual layout
+  services.yaml: |
+    - Infrastructure:
+        - OPNsense:
+            icon: opnsense.png
+            href: https://opnsense.home.lab
+            widget:
+              type: opnsense
+              url: https://192.168.102.1
+              key: "{{HOMEPAGE_VAR_OPNSENSE_KEY}}"
+              secret: "{{HOMEPAGE_VAR_OPNSENSE_SECRET}}"
+        - Core Switch:
+            icon: d-link.png
+            href: http://kswitch.home.lab
+        - WiFi AP:
+            icon: tp-link.png
+            href: http://wifi.home.lab
+    - Storage:
+        - TrueNAS:
+            icon: truenas.png
+            href: https://nas-01.home.lab
+            # Widget disabled until I get the key later
+        - Ceph:
+            icon: ceph.png
+            href: https://ceph.home.lab
+            widget:
+              type: rook
+              url: http://rook-ceph-mgr-dashboard.rook-ceph.svc.cluster.local:8443
+              password: "{{HOMEPAGE_VAR_CEPH_PASSWORD}}"
+    - Cluster Management:
+        - Omni:
+            icon: sidero.png
+            href: https://omni.mvgates.com
+        - ArgoCD:
+            icon: argocd.png
+            href: https://argocd.home.lab
+            widget:
+              type: argocd
+              url: https://argocd.home.lab
+              password: "{{HOMEPAGE_VAR_ARGO_PASSWORD}}"
+        - Traefik:
+            icon: traefik.png
+            href: https://traefik.home.lab/dashboard/
+    - Security:
+        - Vaultwarden:
+            icon: bitwarden.png
+            href: https://vault.mvgates.com
+        - Infisical:
+            icon: infisical.png
+            href: https://secrets.mvgates.com
