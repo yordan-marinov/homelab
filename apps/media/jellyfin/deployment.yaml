@@ -13,6 +13,8 @@ spec:
       labels:
         app: jellyfin
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-w-1
       securityContext:
         runAsUser: 4000
         runAsGroup: 4000
@@ -22,12 +24,16 @@ spec:
           image: jellyfin/jellyfin:latest
           ports:
             - containerPort: 8096
+          securityContext:
+            privileged: true
           volumeMounts:
             - name: config
               mountPath: /config
             - name: media
               mountPath: /data
               readOnly: true
+            - name: dri
+              mountPath: /dev/dri
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -36,6 +42,9 @@ spec:
           nfs:
             server: 192.168.120.4
             path: /mnt/sandbox/media
+        - name: dri
+          hostPath:
+            path: /dev/dri
 ---
 apiVersion: v1
 kind: Service
