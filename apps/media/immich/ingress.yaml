@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: immich-web
+  namespace: immich
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`photos.mvgates.com`)
+      kind: Rule
+      services:
+        - name: immich-server
+          port: 80
+  tls:
+    secretName: immich-tls

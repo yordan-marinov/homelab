@@ -1,0 +1,117 @@
+# --- POSTGRES (StatefulSet) ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  serviceName: immich-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-postgres
+  template:
+    metadata:
+      labels:
+        app: immich-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: tensorchord/pgvecto-rs:pg16-v0.2.0
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: immich-db-keys, key: password }
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "immich"
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: immich-postgres-pvc
+---
+# --- REDIS ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-redis
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-redis
+  template:
+    metadata:
+      labels:
+        app: immich-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+---
+# --- MACHINE LEARNING ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-machine-learning
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-machine-learning
+  template:
+    metadata:
+      labels:
+        app: immich-machine-learning
+    spec:
+      containers:
+        - name: ml
+          image: ghcr.io/immich-app/immich-machine-learning:latest
+          resources:
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+---
+# --- SERVER ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-server
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-server
+  template:
+    metadata:
+      labels:
+        app: immich-server
+    spec:
+      securityContext:
+        runAsUser: 4000
+        runAsGroup: 4000
+        fsGroup: 4000
+      containers:
+        - name: server
+          image: ghcr.io/immich-app/immich-server:latest
+          envFrom:
+            - configMapRef: { name: immich-config }
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: immich-db-keys, key: password }
+          volumeMounts:
+            - name: library
+              mountPath: /usr/src/app/upload
+      volumes:
+        - name: library
+          nfs:
+            server: 192.168.120.4
+            path: /mnt/databox/family/library
