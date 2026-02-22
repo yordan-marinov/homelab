@@ -1,4 +1,4 @@
-# --- POSTGRES (StatefulSet) ---
+# --- 1. THE DATABASE (Postgres with Vector Support) ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,15 +8,19 @@ spec:
   serviceName: immich-postgres
   replicas: 1
   selector:
-    matchLabels: { app: immich-postgres }
+    matchLabels:
+      app: immich-postgres
   template:
     metadata:
-      labels: { app: immich-postgres }
+      labels:
+        app: immich-postgres
     spec:
       containers:
         - name: postgres
           image: tensorchord/pgvecto-rs:pg16-v0.2.0
           env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef: { name: immich-db-keys, key: password }
@@ -29,9 +33,10 @@ spec:
               mountPath: /var/lib/postgresql/data
       volumes:
         - name: db-data
-          persistentVolumeClaim: { claimName: immich-postgres-pvc }
+          persistentVolumeClaim:
+            claimName: immich-postgres-pvc
 ---
-# --- REDIS ---
+# --- 2. THE CACHE (Redis) ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,16 +45,18 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: immich-redis }
+    matchLabels:
+      app: immich-redis
   template:
     metadata:
-      labels: { app: immich-redis }
+      labels:
+        app: immich-redis
     spec:
       containers:
         - name: redis
           image: redis:7-alpine
 ---
-# --- MACHINE LEARNING ---
+# --- 3. THE MACHINE LEARNING (The Scientist) ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,18 +65,22 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: immich-machine-learning }
+    matchLabels:
+      app: immich-machine-learning
   template:
     metadata:
-      labels: { app: immich-machine-learning }
+      labels:
+        app: immich-machine-learning
     spec:
       containers:
         - name: ml
           image: ghcr.io/immich-app/immich-machine-learning:release
           resources:
-            limits: { cpu: "1", memory: "1Gi" }
+            limits:
+              cpu: "1"
+              memory: "1Gi"
 ---
-# --- SERVER ---
+# --- 4. THE SERVER (The Manager) ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -78,10 +89,12 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: immich-server }
+    matchLabels:
+      app: immich-server
   template:
     metadata:
-      labels: { app: immich-server }
+      labels:
+        app: immich-server
     spec:
       containers:
         - name: server
