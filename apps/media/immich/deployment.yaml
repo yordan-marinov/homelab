@@ -8,12 +8,10 @@ spec:
   serviceName: immich-postgres
   replicas: 1
   selector:
-    matchLabels:
-      app: immich-postgres
+    matchLabels: { app: immich-postgres }
   template:
     metadata:
-      labels:
-        app: immich-postgres
+      labels: { app: immich-postgres }
     spec:
       containers:
         - name: postgres
@@ -31,8 +29,7 @@ spec:
               mountPath: /var/lib/postgresql/data
       volumes:
         - name: db-data
-          persistentVolumeClaim:
-            claimName: immich-postgres-pvc
+          persistentVolumeClaim: { claimName: immich-postgres-pvc }
 ---
 # --- REDIS ---
 apiVersion: apps/v1
@@ -43,12 +40,10 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: immich-redis
+    matchLabels: { app: immich-redis }
   template:
     metadata:
-      labels:
-        app: immich-redis
+      labels: { app: immich-redis }
     spec:
       containers:
         - name: redis
@@ -63,20 +58,16 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: immich-machine-learning
+    matchLabels: { app: immich-machine-learning }
   template:
     metadata:
-      labels:
-        app: immich-machine-learning
+      labels: { app: immich-machine-learning }
     spec:
       containers:
         - name: ml
-          image: ghcr.io/immich-app/immich-machine-learning:latest
+          image: ghcr.io/immich-app/immich-machine-learning:release
           resources:
-            limits:
-              cpu: "1"
-              memory: "1Gi"
+            limits: { cpu: "1", memory: "1Gi" }
 ---
 # --- SERVER ---
 apiVersion: apps/v1
@@ -87,20 +78,17 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: immich-server
+    matchLabels: { app: immich-server }
   template:
     metadata:
-      labels:
-        app: immich-server
+      labels: { app: immich-server }
     spec:
-      securityContext:
-        runAsUser: 4000
-        runAsGroup: 4000
-        fsGroup: 4000
       containers:
         - name: server
-          image: ghcr.io/immich-app/immich-server:latest
+          image: ghcr.io/immich-app/immich-server:release
+          securityContext:
+            runAsUser: 4000
+            runAsGroup: 4000
           envFrom:
             - configMapRef: { name: immich-config }
           env:
