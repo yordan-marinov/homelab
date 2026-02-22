@@ -9,3 +9,5 @@ data:
   DB_DATABASE_NAME: "immich"
   REDIS_HOSTNAME: "immich-redis"
   IMMICH_MACHINE_LEARNING_URL: "http://immich-machine-learning:3003"
+  IMMICH_EXTERNAL_URL: "https://photos.mvgates.com"
+  TRUSTED_PROXIES: "10.244.0.0/16,192.168.111.0/24"
