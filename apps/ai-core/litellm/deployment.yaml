@@ -17,11 +17,11 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Waiting for database to wake up..."
-              while ! nc -z localhost 5432; do
-                sleep 1
-              done
-              echo "Database is up! Starting LiteLLM..."
+              python3 -c "import socket; import time;
+              while True:
+                  try:
+                      with socket.create_connection(('localhost', 5432), timeout=1): break
+                  except OSError: time.sleep(1)"
               python3 main.py --config /app/config.yaml --port 4000 --host 0.0.0.0
           ports:
             - containerPort: 4000
