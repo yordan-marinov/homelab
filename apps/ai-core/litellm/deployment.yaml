@@ -48,7 +48,7 @@ spec:
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: DATABASE_URL
-              value: "postgresql://postgres@localhost:5432/litellm"
+              value: "postgresql://postgres@localhost:5432/litellm?sslmode=disable"
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
