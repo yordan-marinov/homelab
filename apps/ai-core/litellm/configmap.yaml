@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: ai-core
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-4o
+        litellm_params:
+          model: openai/gpt-4o
+          api_key: "os.environ/OPENAI_API_KEY"
+      - model_name: gemini-pro
+        litellm_params:
+          model: gemini/gemini-1.5-pro
+          api_key: "os.environ/GEMINI_API_KEY"
+
+    litellm_settings:
+      drop_params: true
+      set_verbose: false

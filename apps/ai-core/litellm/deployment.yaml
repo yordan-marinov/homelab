@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: ai-core
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: litellm }
+  template:
+    metadata:
+      labels: { app: litellm }
+    spec:
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm:main-latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: litellm-api-keys, key: openai_key }
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: litellm-api-keys, key: gemini_key }
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef: { name: litellm-api-keys, key: master_key }
+            - name: DATABASE_URL
+              value: "postgresql://postgres@localhost:5432/litellm"
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+
+        - name: db
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+            - name: POSTGRES_DB
+              value: litellm
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+
+      volumes:
+        - name: config
+          configMap: { name: litellm-config }
+        - name: db-data
+          persistentVolumeClaim: { claimName: litellm-db-pvc }

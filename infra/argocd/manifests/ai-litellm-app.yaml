@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/yordan-marinov/homelab.git
+    targetRevision: HEAD
+    path: apps/ai-core/litellm
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-core
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
