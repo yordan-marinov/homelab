@@ -6,12 +6,10 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: litellm
+    matchLabels: { app: litellm }
   template:
     metadata:
-      labels:
-        app: litellm
+      labels: { app: litellm }
     spec:
       securityContext:
         fsGroup: 999
@@ -21,19 +19,15 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Waiting for database to wake up..."
-              python3 -c "
-              import socket
-              import time
+              # 1. Wait for Postgres Port
+              python3 -c "import socket; import time;
               while True:
                   try:
-                      with socket.create_connection(('localhost', 5432), timeout=1):
-                          print('Database port is open!')
-                          break
-                  except OSError:
-                      time.sleep(1)
-              "
-              echo "Database is up! Starting LiteLLM Proxy..."
+                      with socket.create_connection(('localhost', 5432), timeout=1): break
+                  except OSError: time.sleep(1)"
+
+              # 2. Start LiteLLM
+              echo "Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           ports:
             - containerPort: 4000
@@ -48,7 +42,7 @@ spec:
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: DATABASE_URL
-              value: "postgresql://postgres@localhost:5432/litellm?sslmode=disable"
+              value: "postgresql://postgres:postgres@localhost:5432/litellm?sslmode=disable"
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
@@ -57,10 +51,14 @@ spec:
         - name: db
           image: postgres:16-alpine
           env:
-            - name: POSTGRES_HOST_AUTH_METHOD
-              value: trust
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
             - name: POSTGRES_DB
               value: litellm
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
@@ -68,8 +66,6 @@ spec:
 
       volumes:
         - name: config
-          configMap:
-            name: litellm-config
+          configMap: { name: litellm-config }
         - name: db-data
-          persistentVolumeClaim:
-            claimName: litellm-db-pvc
+          persistentVolumeClaim: { claimName: litellm-db-pvc }
