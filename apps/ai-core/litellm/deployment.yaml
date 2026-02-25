@@ -6,18 +6,24 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: litellm
+    matchLabels: { app: litellm }
   template:
     metadata:
-      labels:
-        app: litellm
+      labels: { app: litellm }
     spec:
       securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
         fsGroup: 999
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -26,7 +32,6 @@ spec:
                   try:
                       with socket.create_connection(('localhost', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
-              echo "Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           ports:
             - containerPort: 4000
@@ -37,21 +42,17 @@ spec:
               value: "true"
             - name: UI_LOCAL_PROXY_ADMIN_ADDR
               value: "https://llmproxy.mvgates.com/ui"
-
-            # --- SECRET INJECTION (The Bank) ---
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: openai_key }
             - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: gemini_key }
-
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: DATABASE_URL
               value: "postgresql://postgres:postgres@localhost:5432/litellm?sslmode=disable"
-
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
@@ -59,6 +60,11 @@ spec:
 
         - name: db
           image: postgres:16-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsUser: 999
           env:
             - name: POSTGRES_USER
               value: postgres
@@ -75,8 +81,6 @@ spec:
 
       volumes:
         - name: config
-          configMap:
-            name: litellm-config
+          configMap: { name: litellm-config }
         - name: db-data
-          persistentVolumeClaim:
-            claimName: litellm-db-pvc
+          persistentVolumeClaim: { claimName: litellm-db-pvc }
