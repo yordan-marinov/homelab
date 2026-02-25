@@ -6,31 +6,34 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: litellm }
+    matchLabels:
+      app: litellm
   template:
     metadata:
-      labels: { app: litellm }
+      labels:
+        app: litellm
     spec:
       securityContext:
-        seccompProfile: { type: RuntimeDefault }
         fsGroup: 999
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
           securityContext:
-            runAsUser: 1000
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
+            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
-              export HOME=/tmp
-              export PRISMA_PY_BINARY_CACHE_DIR=/tmp/prisma-binaries
+              # Wait for database port to open
               python3 -c "import socket; import time;
               while True:
                   try:
                       with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
+
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           env:
             - name: LITELLM_MODE
@@ -38,35 +41,38 @@ spec:
             - name: STORE_MODEL_IN_DB
               value: "true"
             - name: HOME
-              value: "/tmp"
+              value: /tmp
             - name: PRISMA_PY_BINARY_CACHE_DIR
-              value: "/tmp/prisma-binaries"
+              value: /tmp/prisma-binaries
             - name: UI_LOCAL_PROXY_ADMIN_ADDR
               value: "https://llmproxy.mvgates.com/ui"
             - name: DATABASE_URL
               value: "postgresql://postgres:postgres@127.0.0.1:5432/litellm?sslmode=disable"
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: openai_key }
             - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: gemini_key }
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef: { name: litellm-api-keys, key: master_key }
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
               subPath: config.yaml
             - name: temp-storage
               mountPath: /tmp
+          resources:
+            limits: { cpu: "1", memory: "2Gi" }
+            requests: { cpu: "100m", memory: "512Mi" }
 
         - name: db
           image: postgres:16-alpine
           securityContext:
-            runAsUser: 999
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
+            runAsUser: 999
           env:
             - name: POSTGRES_USER
               value: postgres
