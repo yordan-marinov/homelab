@@ -89,7 +89,7 @@ spec:
 
       volumes:
         - name: config
-          configMap: { name: homepage-config }
+          configMap: { name: litellm-config }
         - name: db-data
           persistentVolumeClaim: { claimName: litellm-db-pvc }
         - name: socket
