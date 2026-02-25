@@ -39,6 +39,12 @@ spec:
               value: "production"
             - name: STORE_MODEL_IN_DB
               value: "true"
+            - name: HOME
+              value: "/tmp"
+            - name: XDG_CACHE_HOME
+              value: "/tmp/.cache"
+            - name: PRISMA_PY_BINARY_CACHE_DIR
+              value: "/tmp/prisma-binaries"
             - name: UI_LOCAL_PROXY_ADMIN_ADDR
               value: "https://llmproxy.mvgates.com/ui"
             - name: OPENAI_API_KEY
