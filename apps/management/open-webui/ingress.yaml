@@ -9,10 +9,9 @@ spec:
     - match: Host(`ai.mvgates.com`)
       kind: Rule
       middlewares:
-        - name: webui-headers
+        - name: webui-streaming
       services:
         - name: open-webui
           port: 8080
-          serversTransport: webui-transport
   tls:
     secretName: ai-mvgates-tls

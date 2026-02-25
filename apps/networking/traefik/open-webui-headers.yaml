@@ -1,16 +1,16 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: webui-headers
+  name: webui-streaming
   namespace: management
 spec:
   headers:
+    customResponseHeaders:
+      X-Accel-Buffering: "no"
+      Cache-Control: "no-cache, no-transform"
+      Connection: "keep-alive"
     customRequestHeaders:
       X-Forwarded-Proto: "https"
-    browserXssFilter: true
-    contentTypeNosniff: true
-    forceSTSHeader: true
-    stsSeconds: 31536000
 ---
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
