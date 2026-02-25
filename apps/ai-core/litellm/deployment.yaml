@@ -12,24 +12,18 @@ spec:
       labels: { app: litellm }
     spec:
       securityContext:
-        fsGroup: 999
         runAsNonRoot: true
         seccompProfile: { type: RuntimeDefault }
-
-      initContainers:
-        - name: fix-permissions
-          image: busybox:latest
-          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data && chmod 700 /var/lib/postgresql/data"]
-          securityContext:
-            runAsUser: 0
-            allowPrivilegeEscalation: true
-          volumeMounts:
-            - name: db-data
-              mountPath: /var/lib/postgresql/data
+        fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
 
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -39,8 +33,6 @@ spec:
                       with socket.create_connection(('localhost', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
-          ports:
-            - containerPort: 4000
           env:
             - name: LITELLM_MODE
               value: "production"
@@ -70,7 +62,6 @@ spec:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
             runAsUser: 999
-            runAsGroup: 999
           env:
             - name: POSTGRES_USER
               value: postgres
