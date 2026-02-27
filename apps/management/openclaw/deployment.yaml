@@ -17,21 +17,27 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          command: ["node", "dist/index.js", "gateway"]
+          args:
+            - "--bind"
+            - "lan"
+            - "--port"
+            - "18789"
+            - "--allow-unconfigured"
           env:
-            # 1. Force the app to use our specific config file
-            - name: OPENCLAW_CONFIG_PATH
-              value: "/home/node/.openclaw/openclaw.json"
+            - name: HOME
+              value: "/home/node"
 
-            # 2. Authentication (Highest precedence via Env)
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
+              value: "true"
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: '["https://claw.mvgates.com"]'
+            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
+              value: '["10.244.0.0/16", "127.0.0.1"]'
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
-
-            # 3. Network Bind (The 'lan' setting tells it to listen on 0.0.0.0)
-            - name: OPENCLAW_GATEWAY_BIND
-              value: "lan"
-
-            # 4. API & TOOLS
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
@@ -40,9 +46,6 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-            - name: config-file
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
@@ -50,9 +53,6 @@ spec:
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
-        - name: config-file
-          configMap:
-            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
