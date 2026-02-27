@@ -39,11 +39,19 @@ spec:
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
+
+        - name: ambassador
+          image: alpine/socat:latest
+          args: ["TCP-LISTEN:8000,fork,reuseaddr", "TCP:127.0.0.1:18789"]
+          ports:
+            - containerPort: 8000
+
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
         - name: config-volume
-          configMap: { name: openclaw-config }
+          configMap:
+            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
