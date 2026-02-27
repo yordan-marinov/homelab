@@ -15,7 +15,6 @@ spec:
       securityContext:
         fsGroup: 1000
 
-      # --- THE CONFIG SEEDER (INIT CONTAINER) ---
       initContainers:
         - name: init-config
           image: busybox:latest
@@ -23,14 +22,9 @@ spec:
           args:
             - |
               mkdir -p /home/node/.openclaw
-              # We physically write the required security JSON to the disk
-              echo '{"gateway":{"controlUi":{"enabled":true,"allowedOrigins":["https://claw.mvgates.com"],"dangerouslyAllowHostHeaderOriginFallback":true}}}' > /home/node/.openclaw/openclaw.json
+              # We add 'dangerouslyDisableDeviceAuth: true' to bypass the pairing screen
+              echo '{"gateway":{"controlUi":{"enabled":true,"allowedOrigins":["https://claw.mvgates.com"],"dangerouslyAllowHostHeaderOriginFallback":true,"dangerouslyDisableDeviceAuth":true}}}' > /home/node/.openclaw/openclaw.json
               chown -R 1000:1000 /home/node/.openclaw
-          volumeMounts:
-            - name: state
-              mountPath: /home/node/.openclaw
-      # -------------------------------------------
-
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
