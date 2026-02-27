@@ -18,22 +18,20 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            # 1. GATEWAY AUTH (Matches .env example exactly)
+            - name: GATEWAY__TRUSTED_PROXIES
+              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
+
+            - name: GATEWAY__CONTROL_UI__ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
+            - name: GATEWAY__CONTROL_UI__URL
+              value: "https://claw.mvgates.com"
+            - name: GATEWAY__CONTROL_UI__ENABLED
+              value: "true"
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
 
-            # 2. UI & ORIGINS (Based on the app's internal schema)
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com"
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_URL
-              value: "https://claw.mvgates.com"
-
-            # 3. TRUSTED PROXIES
-            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1,10.244.0.0/16"
-
-            # 4. API & TOOLS
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
@@ -42,7 +40,6 @@ spec:
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: github_token }
-
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
