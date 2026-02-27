@@ -17,13 +17,10 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          args: ["run", "--config", "/app/config/config.yml"]
           env:
-            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com,http://localhost:8000"
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_URL
-              value: "https://claw.mvgates.com"
+            - name: OPENAI_API_BASE_URL
+              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
@@ -40,13 +37,8 @@ spec:
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
-
-        - name: ambassador
-          image: alpine/socat:latest
-          command: ["socat", "TCP-LISTEN:8000,fork,reuseaddr", "TCP:127.0.0.1:18789"]
-          ports:
-            - containerPort: 8000
-
+            - name: config-volume
+              mountPath: /app/config
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
@@ -58,3 +50,6 @@ spec:
           nfs:
             server: 192.168.120.4
             path: /mnt/databox/mgmt/soul/homelab
+        - name: config-volume
+          configMap:
+            name: openclaw-config
