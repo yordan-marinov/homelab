@@ -17,26 +17,28 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          # We use the official command to force the bind to 0.0.0.0
           command: ["node", "dist/index.js", "gateway"]
-          args:
-            - "--bind"
-            - "lan"
-            - "--port"
-            - "18789"
-            - "--allow-unconfigured"
+          args: ["--bind", "lan", "--port", "18789", "--allow-unconfigured"]
           env:
             - name: HOME
               value: "/home/node"
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com"
 
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
+            # --- THE FIX FROM THE BLOG & ERRORS ---
+            # 1. Use the 'GATEWAY_' prefix (no OPENCLAW_ prefix)
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: '["https://claw.mvgates.com"]' # Note: JSON array format
+
+            # 2. This is the "Magic Switch" from your error log:
+            - name: GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
               value: "true"
 
-            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
+            # 3. Trust the Traefik IP range
+            - name: GATEWAY_TRUSTED_PROXIES
               value: "10.244.0.0/16,127.0.0.1"
+            # ---------------------------------------
 
-            - name: OPENCLAW_GATEWAY_TOKEN
+            - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: OPENAI_API_BASE_URL
