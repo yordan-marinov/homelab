@@ -14,36 +14,28 @@ spec:
       serviceAccountName: openclaw-sa
       securityContext:
         fsGroup: 1000
-
       initContainers:
         - name: init-config
           image: busybox:latest
-          command:
-            - sh
-            - -c
-            - |
-              mkdir -p /home/node/.openclaw
-              if [ ! -s /home/node/.openclaw/openclaw.json ]; then
-                echo "{}" > /home/node/.openclaw/openclaw.json
-              fi
-              chown -R 1000:1000 /home/node/.openclaw
+          command: ["sh", "-c", "mkdir -p /home/node/.openclaw && echo '{}' > /home/node/.openclaw/openclaw.json && chown -R 1000:1000 /home/node/.openclaw"]
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           command: ["node", "dist/index.js", "gateway"]
-          args: ["--bind", "loopback", "--port", "18789"]
+          args: ["--bind", "loopback", "--port", "18789", "--allow-unconfigured"]
           env:
             - name: HOME
               value: "/home/node"
+            - name: GATEWAY_MODE
+              value: "local"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1"
+              value: "127.0.0.1,10.0.0.0/8"
             - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
               value: "https://claw.mvgates.com"
             - name: OPENAI_API_BASE_URL
@@ -58,19 +50,6 @@ spec:
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
-
-        - name: ambassador
-          image: alpine/socat:latest
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              while true; do
-                socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
-                sleep 2
-              done
-          ports:
-            - containerPort: 8000
-
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }

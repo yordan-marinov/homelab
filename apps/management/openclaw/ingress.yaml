@@ -10,9 +10,19 @@ spec:
       kind: Rule
       middlewares:
         - name: openclaw-headers
-        - name: webui-streaming
       services:
         - name: openclaw-service
           port: 80
   tls:
     secretName: openclaw-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: openclaw-headers
+  namespace: management
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Host: "claw.mvgates.com"
