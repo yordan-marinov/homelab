@@ -29,13 +29,11 @@ spec:
           env:
             - name: HOME
               value: "/home/node"
-            - name: GATEWAY_MODE
-              value: "local"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1,10.0.0.0/8"
+              value: "127.0.0.1"
             - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
               value: "https://claw.mvgates.com"
             - name: OPENAI_API_BASE_URL
@@ -50,6 +48,21 @@ spec:
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
+
+        - name: ambassador
+          image: alpine/socat:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Starting Bridge..."
+              # Listens on 8000 (Cluster) -> Forwards to 127.0.0.1:18789 (Agent)
+              while true; do
+                socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
+                sleep 2
+              done
+          ports:
+            - containerPort: 8000
+
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }

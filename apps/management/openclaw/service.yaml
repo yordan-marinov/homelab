@@ -6,6 +6,6 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 18789
+      targetPort: 8000
   selector:
     app: openclaw
