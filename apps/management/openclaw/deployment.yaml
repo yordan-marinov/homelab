@@ -27,13 +27,13 @@ spec:
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
-                secretKeyRef: { name: open-webui-secrets, key: virtual_key }
+                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
             - name: GITHUB_TOKEN
               valueFrom:
-                secretKeyRef: { name: open-webui-secrets, key: github_token }
+                secretKeyRef: { name: openclaw-secrets, key: github_token }
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
-                secretKeyRef: { name: open-webui-secrets, key: gateway_token }
+                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GIT_AUTHOR_NAME
               value: "OpenClaw SRE"
             - name: GIT_AUTHOR_EMAIL
