@@ -18,8 +18,8 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            - name: OPENAI_API_BASE_URL
-              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
