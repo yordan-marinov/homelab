@@ -55,4 +55,4 @@ spec:
         - name: homelab-repo
           nfs:
             server: 192.168.120.4
-            path: /mnt/nas_soul/homelab
+            path: /mnt/databox/mgmt/soul/homelab
