@@ -18,47 +18,42 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            - name: OPENCLAW_CONFIG_PATH
-              value: "/home/node/.openclaw/openclaw.json"
-            - name: OPENCLAW_GATEWAY_TOKEN
+            - name: GATEWAY_HOST
+              value: "0.0.0.0"
+            - name: GATEWAY_PORT
+              value: "18789"
+
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: "10.0.0.0/8,127.0.0.1,192.168.0.0/16"
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
+            - name: GATEWAY_CONTROL_UI_URL
+              value: "https://claw.mvgates.com"
+            - name: GATEWAY_CONTROL_UI_ENABLED
+              value: "true"
+
+            - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
+
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-            - name: config-file
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
-
-        - name: ambassador
-          image: alpine/socat:latest
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              echo "Starting Resilient Bridge..."
-              # This loop keeps trying to connect to the agent even if it's not ready yet
-              while true; do
-                socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
-                echo "Agent not ready, retrying in 2s..."
-                sleep 2
-              done
-          ports:
-            - containerPort: 8000
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
-        - name: config-file
-          configMap:
-            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
