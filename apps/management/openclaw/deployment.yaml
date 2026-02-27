@@ -15,19 +15,30 @@ spec:
       securityContext:
         fsGroup: 1000
       containers:
+        # --- CONTAINER 1: THE AGENT ---
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            # 1. THE "OPEN DOOR" POLICY (Temporary for Bootstrap)
-            - name: GATEWAY_TRUSTED_PROXIES
-              value: "0.0.0.0/0" # Trust everything for the handshake
-            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "*"       # Allow any origin for the handshake
-
-            # 2. AUTHENTICATION
+            # 1. AUTH & TRUST (Using both prefixes to be safe)
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
+
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
+            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
+              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
+
+            # 2. ORIGINS (The 4008 error fix)
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
+            - name: GATEWAY_CONTROL_UI_URL
+              value: "https://claw.mvgates.com"
 
             # 3. API & TOOLS
             - name: OPENAI_API_BASE_URL
@@ -48,9 +59,16 @@ spec:
 
         - name: ambassador
           image: alpine/socat:latest
-          args: ["TCP-LISTEN:8000,fork,reuseaddr", "TCP:127.0.0.1:18789"]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for OpenClaw to wake up..."
+              sleep 10
+              echo "Starting Bridge..."
+              socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
           ports:
             - containerPort: 8000
+
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
