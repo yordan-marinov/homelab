@@ -17,29 +17,26 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Force the agent to listen to the cluster network
+              ./openclaw run --host 0.0.0.0 --port 18789
           env:
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-            - name: OPENCLAW_GATEWAY_HOST
-              value: "0.0.0.0"
-            - name: OPENCLAW_GATEWAY_PORT
-              value: "18789"
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: OPENAI_API_KEY
               valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+                secretKeyRef: { name: open-webui-secrets, key: virtual_key }
             - name: GITHUB_TOKEN
               valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: github_token }
+                secretKeyRef: { name: open-webui-secrets, key: github_token }
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef: { name: open-webui-secrets, key: gateway_token }
             - name: GIT_AUTHOR_NAME
               value: "OpenClaw SRE"
             - name: GIT_AUTHOR_EMAIL
-              value: "openclaw@mvgates.com"
-            - name: GIT_COMMITTER_NAME
-              value: "OpenClaw SRE"
-            - name: GIT_COMMITTER_EMAIL
               value: "openclaw@mvgates.com"
           volumeMounts:
             - name: state
@@ -58,4 +55,4 @@ spec:
         - name: homelab-repo
           nfs:
             server: 192.168.120.4
-            path: /mnt/databox/mgmt/soul/homelab
+            path: /mnt/nas_soul/homelab
