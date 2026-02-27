@@ -17,61 +17,46 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          command: ["node", "dist/index.js", "gateway"]
+          args: ["--bind", "loopback", "--port", "18789"]
           env:
-            - name: GATEWAY_HOST
-              value: "0.0.0.0"
-            - name: GATEWAY_PORT
-              value: "18789"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: openclaw
-  namespace: management
-spec:
-  replicas: 1
-  selector:
-    matchLabels: { app: openclaw }
-  template:
-    metadata:
-      labels: { app: openclaw }
-    spec:
-      serviceAccountName: openclaw-sa
-      securityContext:
-        fsGroup: 1000
-      containers:
-        - name: openclaw
-          image: ghcr.io/openclaw/openclaw:latest
-          env:
-            - name: OPENCLAW_CONFIG_PATH
-              value: "/home/node/.openclaw/openclaw.json"
-
+            - name: HOME
+              value: "/home/node"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: "127.0.0.1"
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com"
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-            - name: config-file
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
+
+        - name: ambassador
+          image: alpine/socat:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while true; do
+                # Listen on 8000, forward to Agent on 127.0.0.1
+                socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
+                sleep 2
+              done
+          ports:
+            - containerPort: 8000
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
-        - name: config-file
-          configMap:
-            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4

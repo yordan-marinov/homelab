@@ -4,27 +4,15 @@ metadata:
   name: openclaw-web
   namespace: management
 spec:
-  entryPoints:
-    - web
-    - websecure
+  entryPoints: [web, websecure]
   routes:
     - match: Host(`claw.mvgates.com`)
       kind: Rule
       middlewares:
         - name: openclaw-headers
+        - name: webui-streaming
       services:
         - name: openclaw-service
           port: 80
   tls:
     secretName: openclaw-tls
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: openclaw-headers
-  namespace: management
-spec:
-  headers:
-    customRequestHeaders:
-      X-Forwarded-Proto: "https"
-      X-Forwarded-Host: "claw.mvgates.com"
