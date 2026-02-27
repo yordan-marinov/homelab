@@ -17,30 +17,19 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
-          # 1. Use ONLY the standard CLI flags that the binary recognizes
-          command: ["node", "dist/index.js", "gateway"]
-          args:
-            - "--bind"
-            - "lan"
-            - "--port"
-            - "18789"
-            - "--allow-unconfigured"
           env:
-            - name: HOME
-              value: "/home/node"
+            # 1. Force the app to use our specific config file
+            - name: OPENCLAW_CONFIG_PATH
+              value: "/home/node/.openclaw/openclaw.json"
 
-            # 2. THE SECURITY BYPASS (Mapped from the suggested config keys)
-            - name: GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
-              value: "true"
-            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: '["https://claw.mvgates.com"]' # Passed as a JSON array string
-            - name: GATEWAY_TRUSTED_PROXIES
-              value: '["127.0.0.1", "10.0.0.0/8"]' # Trust the cluster and loopback
-
-            # 3. AUTHENTICATION
+            # 2. Authentication (Highest precedence via Env)
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
+
+            # 3. Network Bind (The 'lan' setting tells it to listen on 0.0.0.0)
+            - name: OPENCLAW_GATEWAY_BIND
+              value: "lan"
 
             # 4. API & TOOLS
             - name: OPENAI_API_BASE_URL
@@ -48,12 +37,12 @@ spec:
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
+            - name: config-file
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
@@ -61,6 +50,9 @@ spec:
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
+        - name: config-file
+          configMap:
+            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
