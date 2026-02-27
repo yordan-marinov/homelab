@@ -18,13 +18,18 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            - name: OPENCLAW_CONFIG_PATH
-              value: "/app/openclaw.json"
+            # 1. THE "OPEN DOOR" POLICY (Temporary for Bootstrap)
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: "0.0.0.0/0" # Trust everything for the handshake
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "*"       # Allow any origin for the handshake
 
-            - name: OPENCLAW_GATEWAY_TOKEN
+            # 2. AUTHENTICATION
+            - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
 
+            # 3. API & TOOLS
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
@@ -36,9 +41,6 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-            - name: config-volume
-              mountPath: /app/openclaw.json
-              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
@@ -52,9 +54,6 @@ spec:
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
-        - name: config-volume
-          configMap:
-            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
