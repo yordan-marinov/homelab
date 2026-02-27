@@ -19,36 +19,28 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            # 1. AUTH & TRUST (Using both prefixes to be safe)
-            - name: OPENCLAW_GATEWAY_TOKEN
+            # AUTH & TRUST
+            - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
-            - name: GATEWAY_AUTH_TOKEN
+            - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
 
             - name: GATEWAY_TRUSTED_PROXIES
               value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
-            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
 
-            # 2. ORIGINS (The 4008 error fix)
             - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com"
-            - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
               value: "https://claw.mvgates.com"
             - name: GATEWAY_CONTROL_UI_URL
               value: "https://claw.mvgates.com"
 
-            # 3. API & TOOLS
+            # API & TOOLS
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
@@ -57,15 +49,20 @@ spec:
             - name: homelab-repo
               mountPath: /app/homelab
 
+        # --- CONTAINER 2: THE AMBASSADOR (Resilient Version) ---
         - name: ambassador
           image: alpine/socat:latest
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Waiting for OpenClaw to wake up..."
-              sleep 10
-              echo "Starting Bridge..."
-              socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
+              echo "Starting Resilient Bridge..."
+              # This loop ensures that if the agent isn't ready or restarts,
+              # the bridge stays alive and keeps trying.
+              while true; do
+                socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
+                echo "Bridge disconnected or agent not ready. Retrying in 2s..."
+                sleep 2
+              done
           ports:
             - containerPort: 8000
 
