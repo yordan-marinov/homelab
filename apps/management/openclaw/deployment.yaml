@@ -18,15 +18,8 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            - name: GATEWAY__TRUSTED_PROXIES
-              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
-
-            - name: GATEWAY__CONTROL_UI__ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com"
-            - name: GATEWAY__CONTROL_UI__URL
-              value: "https://claw.mvgates.com"
-            - name: GATEWAY__CONTROL_UI__ENABLED
-              value: "true"
+            - name: OPENCLAW_CONFIG_PATH
+              value: "/app/openclaw.json"
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -43,6 +36,9 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
+            - name: config-volume
+              mountPath: /app/openclaw.json
+              subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
@@ -56,6 +52,9 @@ spec:
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
+        - name: config-volume
+          configMap:
+            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
