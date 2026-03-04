@@ -23,8 +23,6 @@ spec:
         runAsUser: 4000
         runAsGroup: 4000
         fsGroup: 4000
-        supplementalGroups:
-          - 4000
 
       containers:
         - name: openclaw
@@ -32,16 +30,19 @@ spec:
           imagePullPolicy: Always
 
           command:
-            - node
-            - dist/index.js
-            - gateway
+            - sh
+            - -c
 
           args:
-            - --bind
-            - lan
-            - --port
-            - "18789"
-            - --allow-unconfigured
+            - |
+              mkdir -p /home/node/.openclaw/canvas
+              mkdir -p /home/node/.openclaw/cron
+              chown -R 4000:4000 /home/node/.openclaw || true
+
+              node dist/index.js gateway \
+              --bind lan \
+              --port 18789 \
+              --allow-unconfigured
 
           ports:
             - containerPort: 18789
@@ -63,25 +64,25 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
-            - name: OPENCLAW_AGENT_MODEL
-              value: "gpt-4.1-nano"
-
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw/openclaw.json
               subPath: openclaw.json
               readOnly: true
 
+          securityContext:
+            allowPrivilegeEscalation: false
+
           readinessProbe:
             tcpSocket:
               port: 18789
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20
             periodSeconds: 10
 
           livenessProbe:
             tcpSocket:
               port: 18789
-            initialDelaySeconds: 30
+            initialDelaySeconds: 40
             periodSeconds: 20
 
       volumes:
