@@ -20,12 +20,15 @@ data:
 
       "agents": {
         "defaults": {
-          "provider": "litellm",
           "model": {
             "primary": "gpt-4.1-nano"
-          },
-          "apiBaseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000/v1",
-          "authEnv": "LITELLM_API_KEY"
+          }
+        }
+      },
+
+      "tools": {
+        "auth": {
+          "env": "LITELLM_API_KEY"
         }
       }
     }
