@@ -48,8 +48,8 @@ spec:
               node dist/index.js gateway \
               --bind lan \
               --port 18789 \
-              --allow-unconfigured
-
+              --allow-unconfigured \
+              --disable-control-ui
           ports:
             - containerPort: 18789
               name: http
