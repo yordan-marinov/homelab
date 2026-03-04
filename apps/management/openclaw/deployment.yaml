@@ -23,6 +23,8 @@ spec:
         runAsUser: 4000
         runAsGroup: 4000
         fsGroup: 4000
+        supplementalGroups:
+          - 4000
 
       containers:
         - name: openclaw
@@ -35,9 +37,11 @@ spec:
 
           args:
             - |
-              mkdir -p /home/node/.openclaw/canvas
-              mkdir -p /home/node/.openclaw/cron
-              chown -R 4000:4000 /home/node/.openclaw || true
+              mkdir -p /tmp/openclaw/canvas
+              mkdir -p /tmp/openclaw/cron
+              mkdir -p /tmp/openclaw/devices
+
+              export OPENCLAW_STATE_DIR=/tmp/openclaw
 
               node dist/index.js gateway \
               --bind lan \
@@ -64,14 +68,12 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
-          volumeMounts:
-            - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
-              readOnly: true
+            - name: OPENCLAW_AGENT_MODEL
+              value: "litellm/gpt-4.1-nano"
 
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
 
           readinessProbe:
             tcpSocket:
@@ -84,9 +86,4 @@ spec:
               port: 18789
             initialDelaySeconds: 40
             periodSeconds: 20
-
-      volumes:
-        - name: config
-          configMap:
-            name: openclaw-config
 
