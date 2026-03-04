@@ -6,6 +6,7 @@ metadata:
 
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: openclaw
@@ -22,22 +23,29 @@ spec:
         runAsUser: 4000
         runAsGroup: 4000
         fsGroup: 4000
+        supplementalGroups:
+          - 4000
 
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          imagePullPolicy: Always
 
           command:
             - node
             - dist/index.js
             - gateway
+
           args:
             - --bind
             - lan
             - --port
             - "18789"
+            - --allow-unconfigured
+
           ports:
             - containerPort: 18789
+              name: http
 
           env:
             - name: HOME
@@ -59,10 +67,10 @@ spec:
               value: "gpt-4.1-nano"
 
           volumeMounts:
-             - name: config
-               mountPath: /home/node/.openclaw/openclaw.json
-               subPath: openclaw.json
-               readOnly: true
+            - name: config
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
+              readOnly: true
 
           readinessProbe:
             tcpSocket:
