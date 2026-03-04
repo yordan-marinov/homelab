@@ -23,8 +23,6 @@ spec:
         runAsUser: 4000
         runAsGroup: 4000
         fsGroup: 4000
-        supplementalGroups:
-          - 4000
 
       containers:
         - name: openclaw
@@ -37,7 +35,7 @@ spec:
 
           args:
             - |
-              rm -rf /home/node/.openclaw || true
+              mkdir -p /home/node/.openclaw
 
               mkdir -p /tmp/openclaw/canvas
               mkdir -p /tmp/openclaw/cron
@@ -47,9 +45,8 @@ spec:
 
               node dist/index.js gateway \
               --bind lan \
-              --port 18789 \
-              --allow-unconfigured \
-              --disable-control-ui
+              --port 18789
+
           ports:
             - containerPort: 18789
               name: http
@@ -73,19 +70,18 @@ spec:
             - name: OPENCLAW_AGENT_MODEL
               value: "litellm/gpt-4.1-nano"
 
+          volumeMounts:
+            - name: config
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
+              readOnly: true
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
 
-          readinessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 20
-            periodSeconds: 10
-
-          livenessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 40
-            periodSeconds: 20
+      volumes:
+        - name: config
+          configMap:
+            name: openclaw-config
 
