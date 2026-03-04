@@ -38,11 +38,8 @@ spec:
             - name: HOME
               value: "/home/node"
 
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: gateway_token
+            - name: OPENCLAW_AGENT_MODEL
+              value: "gpt-4.1-nano"
 
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
@@ -52,6 +49,12 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: virtual_key
+
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: gateway_token
 
           volumeMounts:
             - name: state
@@ -98,4 +101,3 @@ spec:
           nfs:
             server: 192.168.120.4
             path: /mnt/databox/mgmt/soul/homelab
-
