@@ -40,8 +40,10 @@ spec:
               mkdir -p /tmp/openclaw/canvas
               mkdir -p /tmp/openclaw/cron
               mkdir -p /tmp/openclaw/devices
+              mkdir -p /tmp/openclaw/workspace
 
               export OPENCLAW_STATE_DIR=/tmp/openclaw
+              export OPENCLAW_WORKSPACE_DIR=/tmp/openclaw/workspace
 
               node dist/index.js gateway \
               --bind lan \
@@ -55,6 +57,15 @@ spec:
             - name: HOME
               value: "/home/node"
 
+            - name: OPENCLAW_STATE_DIR
+              value: "/tmp/openclaw"
+
+            - name: OPENCLAW_WORKSPACE_DIR
+              value: "/tmp/openclaw/workspace"
+
+            - name: OPENCLAW_AGENT_MODEL
+              value: "litellm/gpt-4.1-nano"
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -67,8 +78,9 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
-            - name: OPENCLAW_AGENT_MODEL
-              value: "litellm/gpt-4.1-nano"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
 
           volumeMounts:
             - name: config
@@ -76,9 +88,17 @@ spec:
               subPath: openclaw.json
               readOnly: true
 
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+          readinessProbe:
+            tcpSocket:
+              port: 18789
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 18789
+            initialDelaySeconds: 40
+            periodSeconds: 20
 
       volumes:
         - name: config

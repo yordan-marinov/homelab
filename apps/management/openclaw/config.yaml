@@ -16,8 +16,11 @@ data:
           "enabled": true,
           "allowedOrigins": [
             "https://claw.mvgates.com"
-          ],
-          "dangerouslyAllowHostHeaderOriginFallback": false
+          ]
+        },
+
+        "pairing": {
+          "autoApprove": true
         }
       }
     }
