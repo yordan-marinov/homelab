@@ -78,6 +78,9 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
+            - name: OPENCLAW_WORKSPACE_DIR
+              value: "/tmp/openclaw/workspace"
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -103,5 +106,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: openclaw-config
-
+            name: openclaw-confi
