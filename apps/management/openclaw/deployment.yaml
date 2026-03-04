@@ -36,8 +36,6 @@ spec:
             - lan
             - --port
             - "18789"
-            - --config
-            - /app/config/openclaw.json
           ports:
             - containerPort: 18789
 
@@ -61,10 +59,10 @@ spec:
               value: "gpt-4.1-nano"
 
           volumeMounts:
-            - name: config
-              mountPath: /app/config/openclaw.json
-              subPath: openclaw.json
-              readOnly: true
+             - name: config
+               mountPath: /home/node/.openclaw/openclaw.json
+               subPath: openclaw.json
+               readOnly: true
 
           readinessProbe:
             tcpSocket:
