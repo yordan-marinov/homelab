@@ -37,6 +37,8 @@ spec:
 
           args:
             - |
+              rm -rf /home/node/.openclaw || true
+
               mkdir -p /tmp/openclaw/canvas
               mkdir -p /tmp/openclaw/cron
               mkdir -p /tmp/openclaw/devices
