@@ -24,13 +24,14 @@ spec:
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
           command: ["node", "dist/index.js", "gateway"]
+          command: ["node", "dist/index.js", "gateway"]
           args:
             - "--bind"
-            - "0.0.0.0"
+            - "lan"
             - "--port"
             - "18789"
 
-          ports:
+        ports:
             - containerPort: 18789
 
           env:
