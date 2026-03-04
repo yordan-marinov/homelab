@@ -14,8 +14,14 @@ data:
         "controlUi": {
           "enabled": true,
           "allowedOrigins": ["https://claw.mvgates.com"],
-          "dangerouslyAllowHostHeaderOriginFallback": true
+          "dangerouslyAllowHostHeaderOriginFallback": false
         }
+      },
+      "agent": {
+        "provider": "litellm",
+        "model": "gpt-4.1-nano",
+        "apiBaseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000/v1",
+        "authEnv": "LITELLM_API_KEY"
       }
     }
 

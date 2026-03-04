@@ -3,15 +3,18 @@ kind: IngressRoute
 metadata:
   name: openclaw-web
   namespace: management
+
 spec:
   entryPoints:
     - websecure
+
   routes:
     - match: Host(`claw.mvgates.com`)
       kind: Rule
       services:
         - name: openclaw-service
           port: 80
+
   tls:
     secretName: openclaw-tls
 

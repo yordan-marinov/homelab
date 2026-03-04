@@ -3,17 +3,21 @@ kind: Deployment
 metadata:
   name: openclaw
   namespace: management
+
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: openclaw
+
   template:
     metadata:
       labels:
         app: openclaw
+
     spec:
       serviceAccountName: openclaw-sa
+
       securityContext:
         runAsUser: 4000
         runAsGroup: 4000
@@ -22,39 +26,24 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
-          imagePullPolicy: Always
-          command: ["node", "dist/index.js", "gateway"]
+
+          command:
+            - node
+            - dist/index.js
+            - gateway
+
           args:
-            - "--bind"
-            - "lan"
-            - "--port"
+            - --bind
+            - lan
+            - --port
             - "18789"
 
           ports:
             - containerPort: 18789
-              name: http
 
           env:
             - name: HOME
               value: "/home/node"
-
-            - name: OPENCLAW_AGENT_MODEL
-              value: "gpt-4.1-nano"
-
-            - name: OPENAI_API_BASE_URL
-              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: virtual_key
-
-            - name: LITELLM_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: virtual_key
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -62,20 +51,20 @@ spec:
                   name: openclaw-secrets
                   key: gateway_token
 
-          volumeMounts:
-            - name: state
-              mountPath: /home/node/.openclaw
+            - name: LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: virtual_key
 
+            - name: OPENCLAW_AGENT_MODEL
+              value: "gpt-4.1-nano"
+
+          volumeMounts:
             - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
+              mountPath: /app/config/openclaw.json
               subPath: openclaw.json
               readOnly: true
-
-            - name: brainbox
-              mountPath: /app/brainbox
-
-            - name: homelab-repo
-              mountPath: /app/homelab
 
           readinessProbe:
             tcpSocket:
@@ -90,20 +79,7 @@ spec:
             periodSeconds: 20
 
       volumes:
-        - name: state
-          persistentVolumeClaim:
-            claimName: openclaw-state-pvc
-
         - name: config
           configMap:
             name: openclaw-config
 
-        - name: brainbox
-          nfs:
-            server: 192.168.120.4
-            path: /mnt/databox/lab/brainbox
-
-        - name: homelab-repo
-          nfs:
-            server: 192.168.120.4
-            path: /mnt/databox/mgmt/soul/homelab
