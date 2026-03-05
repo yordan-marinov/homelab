@@ -8,16 +8,22 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "mode": "local",
-        "bind": "lan",
-        "port": 18789,
-        "startupGraceMs": 15000,
-        "requestTimeoutMs": 120000,
+          "mode": "local",
+          "bind": "lan",
+          "port": 18789,
 
-        "trustedProxies": [
-          "10.0.0.0/8",
-          "10.244.0.0/16"
-        ],
+          "trustedProxies": [
+            "10.0.0.0/8",
+            "10.244.0.0/16"
+          ],
+
+          "controlUi": {
+            "enabled": true,
+            "allowedOrigins": [
+              "https://claw.mvgates.com"
+            ]
+          }
+        },
 
         "controlUi": {
           "enabled": true,
@@ -30,13 +36,13 @@ data:
       "models": {
         "providers": {
           "litellm": {
-            "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
+            "baseUrl": "http://litellm.ai-core.svc.cluster.local:4000",
             "apiKey": "${LITELLM_API_KEY}",
             "api": "openai-completions",
 
             "models": [
               {
-                "id": "openai/gpt-4.1-nano",
+                "id": "gpt-4.1-nano",
                 "name": "GPT-4.1 Nano",
                 "reasoning": false,
                 "input": ["text"],
