@@ -25,6 +25,7 @@ spec:
         fsGroup: 1000
 
       containers:
+
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
@@ -38,6 +39,7 @@ spec:
             - containerPort: 18789
 
           env:
+
             - name: HOME
               value: /data
 
@@ -46,6 +48,9 @@ spec:
 
             - name: OPENCLAW_WORKSPACE_DIR
               value: /data/workspace
+
+            - name: OPENAI_API_BASE
+              value: http://litellm-service.ai-core.svc.cluster.local:4000/v1
 
             - name: LITELLM_API_KEY
               valueFrom:
@@ -59,20 +64,46 @@ spec:
                   name: openclaw-secrets
                   key: gateway_token
 
-
           volumeMounts:
+
             - name: openclaw-data
               mountPath: /data
 
-            - name: config
+            - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
 
+            - name: agent-auth
+              mountPath: /data/agents/main/agent/auth-profiles.json
+              subPath: auth-profiles.json
+
+          readinessProbe:
+            tcpSocket:
+              port: 18789
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 18789
+            initialDelaySeconds: 40
+            periodSeconds: 20
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+
       volumes:
+
         - name: openclaw-data
           persistentVolumeClaim:
             claimName: openclaw-data
 
-        - name: config
+        - name: openclaw-config
           configMap:
             name: openclaw-config
+
+        - name: agent-auth
+          configMap:
+            name: openclaw-agent-auth
+

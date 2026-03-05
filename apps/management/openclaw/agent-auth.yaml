@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-agent-auth
+  namespace: management
+
+data:
+  auth-profiles.json: |
+    {
+      "default": {
+        "provider": "openai",
+        "apiKeyEnv": "LITELLM_API_KEY",
+        "baseUrlEnv": "OPENAI_API_BASE"
+      }
+    }
+
