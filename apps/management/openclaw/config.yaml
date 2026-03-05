@@ -28,7 +28,7 @@ data:
       "agents": {
         "defaults": {
           "model": {
-            "primary": "openai/gpt-4.1-nano"
+            "primary": "gpt-4.1-nano"
           }
         }
       }
