@@ -8,7 +8,7 @@ data:
   auth-profiles.json: |
     {
       "main": {
-        "provider": "litellm",
+        "provider": "openai",
         "apiKeyEnv": "LITELLM_API_KEY",
         "baseUrlEnv": "OPENAI_API_BASE"
       }
