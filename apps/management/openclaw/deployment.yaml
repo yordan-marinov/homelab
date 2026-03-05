@@ -49,7 +49,7 @@ spec:
               value: /data/workspace
 
             - name: OPENAI_API_BASE
-              value: "https://llmproxy.mvgates.com/v1"
+              value: https://llmproxy.mvgates.com/v1
 
             - name: OPENAI_API_KEY
               valueFrom:
