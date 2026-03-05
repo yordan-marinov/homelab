@@ -3,75 +3,52 @@ kind: Deployment
 metadata:
   name: litellm
   namespace: ai-core
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: litellm
+
   template:
     metadata:
       labels:
         app: litellm
+
     spec:
-      securityContext:
-        fsGroup: 999
+
       containers:
+
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
-          command: ["/bin/sh", "-c"]
+
           args:
-            - |
-              python3 -c "import socket; import time;
-              while True:
-                  try:
-                      with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
-                  except OSError: time.sleep(1)"
-              litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
+            - "--config=/app/config/config.yaml"
+            - "--port=4000"
+            - "--host=0.0.0.0"
+
           ports:
             - containerPort: 4000
+
           env:
-            - name: LITELLM_MODE
-              value: "production"
+
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@litellm-postgres.ai-core.svc.cluster.local:5432/litellm?sslmode=disable"
+
             - name: STORE_MODEL_IN_DB
               value: "true"
-            - name: UI_LOCAL_PROXY_ADMIN_ADDR
-              value: "https://llmproxy.mvgates.com/ui"
-            - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@127.0.0.1:5432/litellm?sslmode=disable"
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef: { name: litellm-api-keys, key: master_key }
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef: { name: litellm-api-keys, key: openai_key }
-            - name: GEMINI_API_KEY
-              valueFrom:
-                secretKeyRef: { name: litellm-api-keys, key: gemini_key }
+
+            - name: LITELLM_MODE
+              value: production
+
           volumeMounts:
             - name: config
-              mountPath: /app/config.yaml
-              subPath: config.yaml
-
-        - name: db
-          image: postgres:16-alpine
-          env:
-            - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
-              value: postgres
-            - name: POSTGRES_DB
-              value: litellm
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
-          volumeMounts:
-            - name: db-data
-              mountPath: /var/lib/postgresql/data
-              subPath: pgdata
+              mountPath: /app/config
+              readOnly: true
 
       volumes:
         - name: config
           configMap:
             name: litellm-config
-        - name: db-data
-          persistentVolumeClaim:
-            claimName: litellm-db-pvc
+

@@ -3,15 +3,18 @@ kind: IngressRoute
 metadata:
   name: litellm-web
   namespace: ai-core
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-production
+
 spec:
-  entryPoints: [websecure]
+  entryPoints:
+    - websecure
+
   routes:
     - match: Host(`llmproxy.mvgates.com`)
       kind: Rule
       services:
         - name: litellm-service
           port: 4000
+
   tls:
     secretName: llmproxy-tls
+
