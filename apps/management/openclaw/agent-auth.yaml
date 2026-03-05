@@ -11,6 +11,5 @@ data:
         "provider": "direct",
         "apiKeyEnv": "LITELLM_API_KEY",
         "baseUrlEnv": ""
-       }
-   }
-
+      }
+    }
