@@ -35,19 +35,33 @@ spec:
 
           args:
             - |
-              mkdir -p /home/node/.openclaw
+              echo "Preparing OpenClaw runtime..."
 
+              # main runtime dirs
+              mkdir -p /tmp/openclaw
               mkdir -p /tmp/openclaw/canvas
               mkdir -p /tmp/openclaw/cron
               mkdir -p /tmp/openclaw/devices
               mkdir -p /tmp/openclaw/workspace
 
+              # REQUIRED fallback dirs (this fixes the EACCES bug)
+              mkdir -p /home/node/.openclaw
+              mkdir -p /home/node/.openclaw/workspace
+              mkdir -p /home/node/.openclaw/devices
+
+              # fix ownership
+              chown -R 4000:4000 /tmp/openclaw
+              chown -R 4000:4000 /home/node/.openclaw
+
               export OPENCLAW_STATE_DIR=/tmp/openclaw
               export OPENCLAW_WORKSPACE_DIR=/tmp/openclaw/workspace
 
+              echo "Starting OpenClaw..."
+
               node dist/index.js gateway \
-              --bind lan \
-              --port 18789
+                --bind lan \
+                --port 18789 \
+                --allow-unconfigured
 
           ports:
             - containerPort: 18789
@@ -56,15 +70,6 @@ spec:
           env:
             - name: HOME
               value: "/home/node"
-
-            - name: OPENCLAW_STATE_DIR
-              value: "/tmp/openclaw"
-
-            - name: OPENCLAW_WORKSPACE_DIR
-              value: "/tmp/openclaw/workspace"
-
-            - name: OPENCLAW_AGENT_MODEL
-              value: "litellm/gpt-4.1-nano"
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -78,18 +83,18 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
+            - name: OPENCLAW_AGENT_MODEL
+              value: "litellm/gpt-4.1-nano"
+
+            - name: OPENCLAW_STATE_DIR
+              value: "/tmp/openclaw"
+
             - name: OPENCLAW_WORKSPACE_DIR
               value: "/tmp/openclaw/workspace"
 
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-
-          volumeMounts:
-            - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
-              readOnly: true
 
           readinessProbe:
             tcpSocket:
@@ -103,7 +108,3 @@ spec:
             initialDelaySeconds: 40
             periodSeconds: 20
 
-      volumes:
-        - name: config
-          configMap:
-            name: openclaw-config
