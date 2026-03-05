@@ -50,7 +50,7 @@ spec:
               value: /data/workspace
 
             - name: OPENAI_API_BASE
-                value: http://litellm-service.ai-core.svc.cluster.local:4000
+              value: http://litellm-service.ai-core.svc.cluster.local:4000
 
             - name: LITELLM_API_KEY
               valueFrom:
