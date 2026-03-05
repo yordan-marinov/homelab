@@ -28,7 +28,7 @@ data:
       "agents": {
         "defaults": {
           "model": {
-            "primary": "litellm/gpt-4.1-nano"
+            "primary": "openai/gpt-4.1-nano"
           }
         }
       }
