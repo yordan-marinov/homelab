@@ -20,59 +20,41 @@ spec:
       serviceAccountName: openclaw-sa
 
       securityContext:
-        runAsUser: 4000
-        runAsGroup: 4000
-        fsGroup: 4000
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
 
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
-          imagePullPolicy: Always
-
-          command:
-            - sh
-            - -c
-
-          args:
-            - |
-              echo "Preparing OpenClaw runtime..."
-
-              mkdir -p /tmp/openclaw
-              mkdir -p /tmp/openclaw/canvas
-              mkdir -p /tmp/openclaw/cron
-              mkdir -p /tmp/openclaw/devices
-              mkdir -p /tmp/openclaw/workspace
-
-              export HOME=/tmp/openclaw
-              export OPENCLAW_STATE_DIR=/tmp/openclaw
-              export OPENCLAW_WORKSPACE_DIR=/tmp/openclaw/workspace
-
-              echo "Starting OpenClaw..."
-
-              node dist/index.js gateway \
-                --bind lan \
-                --port 18789 \
-                --allow-unconfigured
 
           ports:
             - containerPort: 18789
-              name: http
+
+          command:
+            - node
+            - dist/index.js
+            - gateway
 
           env:
+
             - name: HOME
-              value: "/tmp/openclaw"
+              value: /data
 
             - name: OPENCLAW_STATE_DIR
-              value: "/tmp/openclaw"
+              value: /data
 
             - name: OPENCLAW_WORKSPACE_DIR
-              value: "/tmp/openclaw/workspace"
+              value: /data/workspace
 
-            - name: OPENCLAW_AGENT_MODEL
-              value: "litellm/gpt-4.1-nano"
+            - name: OPENAI_API_BASE
+              value: http://litellm.management.svc.cluster.local:4000
 
-            - name: GATEWAY_CONTROLUI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
-              value: "true"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: virtual_key
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -80,28 +62,34 @@ spec:
                   name: openclaw-secrets
                   key: gateway_token
 
-            - name: LITELLM_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: virtual_key
+          volumeMounts:
 
-            - name: OPENCLAW_GATEWAY_CONTROLUI_ALLOWEDORIGINS
-              value: "https://claw.mvgates.com"
+            - name: openclaw-data
+              mountPath: /data
 
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            - name: config
+              mountPath: /data/openclaw.json
+              subPath: openclaw.json
 
           readinessProbe:
             tcpSocket:
               port: 18789
-            initialDelaySeconds: 20
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
 
           livenessProbe:
             tcpSocket:
               port: 18789
-            initialDelaySeconds: 40
-            periodSeconds: 20
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+      volumes:
+
+        - name: openclaw-data
+          persistentVolumeClaim:
+            claimName: openclaw-data
+
+        - name: config
+          configMap:
+            name: openclaw-config
 
