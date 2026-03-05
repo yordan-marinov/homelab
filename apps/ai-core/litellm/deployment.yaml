@@ -42,6 +42,25 @@ spec:
             - name: LITELLM_MODE
               value: production
 
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-api-keys
+                  key: openai_key
+
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-api-keys
+                  key: gemini_key
+
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-api-keys
+                  key: master_key
+
+
           volumeMounts:
             - name: config
               mountPath: /app/config
@@ -50,5 +69,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: litellm-config
-
+            name: litellm-confi
