@@ -11,6 +11,8 @@ data:
         "mode": "local",
         "bind": "lan",
         "port": 18789,
+        "startupGraceMs": 15000,
+        "requestTimeoutMs": 120000,
 
         "trustedProxies": [
           "10.0.0.0/8",
@@ -28,13 +30,13 @@ data:
       "models": {
         "providers": {
           "litellm": {
-            "baseUrl": "http://litellm.ai-core.svc.cluster.local:4000",
+            "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
             "apiKey": "${LITELLM_API_KEY}",
             "api": "openai-completions",
 
             "models": [
               {
-                "id": "gpt-4.1-nano",
+                "id": "openai/gpt-4.1-nano",
                 "name": "GPT-4.1 Nano",
                 "reasoning": false,
                 "input": ["text"],
