@@ -37,22 +37,13 @@ spec:
             - |
               echo "Preparing OpenClaw runtime..."
 
-              # main runtime dirs
               mkdir -p /tmp/openclaw
               mkdir -p /tmp/openclaw/canvas
               mkdir -p /tmp/openclaw/cron
               mkdir -p /tmp/openclaw/devices
               mkdir -p /tmp/openclaw/workspace
 
-              # REQUIRED fallback dirs (this fixes the EACCES bug)
-              mkdir -p /home/node/.openclaw
-              mkdir -p /home/node/.openclaw/workspace
-              mkdir -p /home/node/.openclaw/devices
-
-              # fix ownership
-              chown -R 4000:4000 /tmp/openclaw
-              chown -R 4000:4000 /home/node/.openclaw
-
+              export HOME=/tmp/openclaw
               export OPENCLAW_STATE_DIR=/tmp/openclaw
               export OPENCLAW_WORKSPACE_DIR=/tmp/openclaw/workspace
 
@@ -69,7 +60,16 @@ spec:
 
           env:
             - name: HOME
-              value: "/home/node"
+              value: "/tmp/openclaw"
+
+            - name: OPENCLAW_STATE_DIR
+              value: "/tmp/openclaw"
+
+            - name: OPENCLAW_WORKSPACE_DIR
+              value: "/tmp/openclaw/workspace"
+
+            - name: OPENCLAW_AGENT_MODEL
+              value: "litellm/gpt-4.1-nano"
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -83,14 +83,8 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
-            - name: OPENCLAW_AGENT_MODEL
-              value: "litellm/gpt-4.1-nano"
-
-            - name: OPENCLAW_STATE_DIR
-              value: "/tmp/openclaw"
-
-            - name: OPENCLAW_WORKSPACE_DIR
-              value: "/tmp/openclaw/workspace"
+            - name: OPENCLAW_GATEWAY_CONTROLUI_ALLOWEDORIGINS
+              value: "https://claw.mvgates.com"
 
           securityContext:
             allowPrivilegeEscalation: false
