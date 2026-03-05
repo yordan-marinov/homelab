@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: litellm-postgres
   namespace: ai-core
+
 spec:
   selector:
     app: litellm-postgres
+
   ports:
     - port: 5432
       targetPort: 5432
