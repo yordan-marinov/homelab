@@ -18,9 +18,15 @@ spec:
         app: litellm-postgres
 
     spec:
+      securityContext:
+        fsGroup: 1001
+
       containers:
         - name: postgres
-          image: bitnami/postgresql:latest
+          image: bitnami/postgresql:16
+
+          ports:
+            - containerPort: 5432
 
           env:
             - name: POSTGRESQL_USERNAME
@@ -32,15 +38,17 @@ spec:
             - name: POSTGRESQL_DATABASE
               value: litellm
 
-          ports:
-            - containerPort: 5432
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
 
           volumeMounts:
             - name: data
               mountPath: /bitnami/postgresql
 
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: litellm-db-pvc
+  volumeClaimTemplates: []
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: litellm-db-pvc
 
