@@ -49,6 +49,9 @@ spec:
             - name: OPENCLAW_WORKSPACE_DIR
               value: /data/workspace
 
+            - name: OPENAI_API_BASE
+              value: http://litellm-service.ai-core.svc.cluster.local:4000
+
             - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -69,10 +72,6 @@ spec:
             - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
-
-            - name: agent-auth
-              mountPath: /data/agents/main/agent/auth-profiles.json
-              subPath: auth-profiles.json
 
           readinessProbe:
             tcpSocket:
@@ -99,8 +98,4 @@ spec:
         - name: openclaw-config
           configMap:
             name: openclaw-config
-
-        - name: agent-auth
-          configMap:
-            name: openclaw-agent-auth
 
