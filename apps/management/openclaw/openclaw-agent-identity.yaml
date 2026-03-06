@@ -8,7 +8,7 @@ spec:
   refreshInterval: 1h
 
   secretStoreRef:
-    name: infisical-store
+    name: infisical-agents-store
     kind: ClusterSecretStore
 
   target:
@@ -20,20 +20,16 @@ spec:
     - secretKey: github_token
       remoteRef:
         key: GITHUB_TOKEN
-        secretPath: /agents/homecrew-sre
 
     - secretKey: git_ssh_private_key
       remoteRef:
         key: GIT_SSH_PRIVATE_KEY
-        secretPath: /agents/homecrew-sre
 
     - secretKey: git_user_name
       remoteRef:
         key: GIT_USER_NAME
-        secretPath: /agents/homecrew-sre
 
     - secretKey: git_user_email
       remoteRef:
         key: GIT_USER_EMAIL
-        secretPath: /agents/homecrew-sre
 
