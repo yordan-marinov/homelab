@@ -19,17 +19,21 @@ spec:
 
     - secretKey: github_token
       remoteRef:
-        key: /agents/homecrew-sre/GITHUB_TOKEN
+        key: GITHUB_TOKEN
+        secretPath: /agents/homecrew-sre
 
     - secretKey: git_ssh_private_key
       remoteRef:
-        key: /agents/homecrew-sre/GIT_SSH_PRIVATE_KEY
+        key: GIT_SSH_PRIVATE_KEY
+        secretPath: /agents/homecrew-sre
 
     - secretKey: git_user_name
       remoteRef:
-        key: /agents/homecrew-sre/GIT_USER_NAME
+        key: GIT_USER_NAME
+        secretPath: /agents/homecrew-sre
 
     - secretKey: git_user_email
       remoteRef:
-        key: /agents/homecrew-sre/GIT_USER_EMAIL
+        key: GIT_USER_EMAIL
+        secretPath: /agents/homecrew-sre
 
