@@ -13,7 +13,7 @@ spec:
       values: |
         nfs:
           server: 192.168.120.4
-          path: /mnt/sandbox/media # We will start with the SSD Sandbox
+          path: /mnt/sandbox/media
         storageClass:
           name: nfs-nas-media
           reclaimPolicy: Retain

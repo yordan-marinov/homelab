@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/yordan-marinov/homelab.git
+    repoURL: https://github.com/mvg-labs/homelab.git
     targetRevision: HEAD
     path: apps/security/vaultwarden
     directory:
