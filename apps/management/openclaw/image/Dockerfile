@@ -2,7 +2,7 @@ FROM ghcr.io/openclaw/openclaw:latest
 
 USER root
 
-COPY image/tools /tools
+COPY tools /tools
 RUN chmod +x /tools/*
 
 RUN apt-get update && apt-get install -y \
@@ -31,7 +31,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 RUN mkdir -p /tools /data /data/workspace
 
-COPY image/bootstrap.sh /bootstrap.sh
+COPY bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
 
 USER 1000
