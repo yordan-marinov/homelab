@@ -4,8 +4,8 @@ set -e
 
 echo "=== HomeCrew SRE Bootstrap Starting ==="
 
-mkdir -p /workspace
-cd /workspace
+mkdir -p /data/workspace
+cd /data/workspace
 
 # Configure Git identity
 git config --global user.name "$GIT_AUTHOR_NAME"

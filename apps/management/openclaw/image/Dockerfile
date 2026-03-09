@@ -2,6 +2,9 @@ FROM ghcr.io/openclaw/openclaw:latest
 
 USER root
 
+COPY image/tools /tools
+RUN chmod +x /tools/*
+
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,16 +14,13 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
-# Install kubectl
 RUN curl -LO https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl \
  && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
-# Install Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
  && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -29,7 +29,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  && apt-get update \
  && apt-get install gh -y
 
-COPY bootstrap.sh /bootstrap.sh
+RUN mkdir -p /tools /data /data/workspace
+
+COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
 
 USER 1000
