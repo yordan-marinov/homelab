@@ -4,17 +4,16 @@ set -e
 
 echo "=== HomeCrew SRE Bootstrap Starting ==="
 
-mkdir -p /data/workspace
-cd /data/workspace
+WORKDIR=${OPENCLAW_WORKSPACE_DIR:-/data/workspace}
 
-# Configure Git identity
+mkdir -p "$WORKDIR"
+cd "$WORKDIR"
+
 git config --global user.name "$GIT_AUTHOR_NAME"
 git config --global user.email "$GIT_AUTHOR_EMAIL"
 
-# Setup GitHub auth
 echo "$GITHUB_TOKEN" | gh auth login --with-token
 
-# Clone repos if not present
 if [ ! -d "homelab" ]; then
     echo "Cloning homelab repo"
     git clone https://github.com/mvg-labs/homelab.git
@@ -30,3 +29,5 @@ echo "Workspace ready"
 kubectl get nodes || true
 
 echo "=== Bootstrap complete ==="
+
+exec "$@"
