@@ -1,0 +1,25 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: infisical-ghcr-store
+spec:
+  provider:
+    infisical:
+      hostAPI: http://infisical-app-infisical-standalone-infisical.infisical.svc.cluster.local:8080/api
+
+      auth:
+        universalAuthCredentials:
+          clientId:
+            name: infisical-auth
+            key: client-id
+            namespace: external-secrets
+          clientSecret:
+            name: infisical-auth
+            key: client-secret
+            namespace: external-secrets
+
+      secretsScope:
+        projectSlug: homelab-cluster-z-u-bm
+        environmentSlug: prod
+        secretsPath: /services/ghcr
+

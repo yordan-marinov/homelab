@@ -19,6 +19,9 @@ spec:
     spec:
       serviceAccountName: openclaw-sa
 
+      imagePullSecrets:
+        - name: ghcr-secret
+
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -93,7 +96,7 @@ spec:
               subPath: openclaw.json
 
             - name: workspace
-              mountPath: /workspace
+              mountPath: /data/workspace
 
           readinessProbe:
             tcpSocket:
