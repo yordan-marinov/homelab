@@ -35,6 +35,9 @@ spec:
           imagePullPolicy: Always
 
           command:
+            - /bootstrap.sh
+
+          args:
             - node
             - dist/index.js
             - gateway
