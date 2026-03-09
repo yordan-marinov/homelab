@@ -4,15 +4,11 @@ set -e
 
 echo "=== HomeCrew SRE Bootstrap Starting ==="
 
-WORKDIR=${OPENCLAW_WORKSPACE_DIR:-/data/workspace}
-
-mkdir -p "$WORKDIR"
-cd "$WORKDIR"
+mkdir -p /data/workspace
+cd /data/workspace
 
 git config --global user.name "$GIT_AUTHOR_NAME"
 git config --global user.email "$GIT_AUTHOR_EMAIL"
-
-echo "$GITHUB_TOKEN" | gh auth login --with-token
 
 if [ ! -d "homelab" ]; then
     echo "Cloning homelab repo"
