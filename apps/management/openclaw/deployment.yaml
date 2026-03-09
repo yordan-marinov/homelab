@@ -27,7 +27,8 @@ spec:
       containers:
 
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:latest
+
+          image: ghcr.io/mvg-labs/openclaw-sre:1.0
           imagePullPolicy: Always
 
           command:
@@ -64,6 +65,24 @@ spec:
                   name: openclaw-secrets
                   key: gateway_token
 
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-agent-secret
+                  key: github_token
+
+            - name: GIT_AUTHOR_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-agent-secret
+                  key: git_user_name
+
+            - name: GIT_AUTHOR_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-agent-secret
+                  key: git_user_email
+
           volumeMounts:
 
             - name: openclaw-data
@@ -72,6 +91,9 @@ spec:
             - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
+
+            - name: workspace
+              mountPath: /workspace
 
           readinessProbe:
             tcpSocket:
@@ -98,4 +120,7 @@ spec:
         - name: openclaw-config
           configMap:
             name: openclaw-config
+
+        - name: workspace
+          emptyDir: {}
 
