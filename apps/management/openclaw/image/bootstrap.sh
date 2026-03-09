@@ -29,4 +29,5 @@ kubectl get nodes || true
 
 echo "=== Bootstrap complete ==="
 
+cd /app
 exec "$@"
