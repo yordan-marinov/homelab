@@ -61,12 +61,6 @@ echo "Installing agent configuration"
 cp $AGENT_SRC/*.md $AGENT_DST/
 
 ########################################
-# Ensure tools executable
-########################################
-
-chmod +x /tools/*.sh
-
-########################################
 # Verify cluster access
 ########################################
 
