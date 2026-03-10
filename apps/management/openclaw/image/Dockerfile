@@ -27,9 +27,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  && apt-get install gh -y
 
 COPY image/agent /agent
+RUN chown -R 1000:1000 /agent
 
 COPY image/tools /tools
-RUN chmod +x /tools/*
+RUN chmod +x /tools/*.sh \
+ && chown -R 1000:1000 /tools
 
 COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
