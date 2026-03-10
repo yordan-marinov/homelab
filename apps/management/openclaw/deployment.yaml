@@ -31,7 +31,7 @@ spec:
 
         - name: openclaw
 
-          image: ghcr.io/mvg-labs/openclaw-sre:1.6
+          image: ghcr.io/mvg-labs/openclaw-sre:1.7
           imagePullPolicy: Always
 
           command:

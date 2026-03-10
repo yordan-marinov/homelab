@@ -26,6 +26,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  && apt-get update \
  && apt-get install gh -y
 
+COPY image/agent /agent
+
 COPY image/tools /tools
 RUN chmod +x /tools/*
 
@@ -33,6 +35,7 @@ COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
 
 RUN mkdir -p /data/workspace
+RUN mkdir -p /data/.openclaw/workspace
 
 USER 1000
 
