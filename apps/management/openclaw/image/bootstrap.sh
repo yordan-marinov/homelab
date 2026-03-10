@@ -31,3 +31,9 @@ echo "=== Bootstrap complete ==="
 
 cd /app
 exec "$@"
+
+echo "Loading agent configuration"
+
+cat /agent/system_prompt.md
+cat /agent/policies.md
+cat /agent/capabilities.md
