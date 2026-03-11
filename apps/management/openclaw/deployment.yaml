@@ -30,17 +30,8 @@ spec:
       containers:
 
         - name: openclaw
-
-          image: ghcr.io/mvg-labs/openclaw-sre:1.9
+          image: ghcr.io/mvg-labs/openclaw-sre:1.10
           imagePullPolicy: Always
-
-          command:
-            - /bootstrap.sh
-
-          args:
-            - node
-            - dist/index.js
-            - gateway
 
           ports:
             - containerPort: 18789
@@ -58,6 +49,12 @@ spec:
 
             - name: OPENCLAW_SKILLS_DIR
               value: /app/skills
+
+            - name: OPENCLAW_TOOLS_DIR
+              value: /tools
+
+            - name: OPENCLAW_PLAYBOOKS_DIR
+              value: /playbooks
 
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000

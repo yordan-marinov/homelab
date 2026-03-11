@@ -13,10 +13,22 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
+########################################
+# Kubernetes CLI
+########################################
+
 RUN curl -LO https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl \
  && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
+########################################
+# Helm
+########################################
+
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+########################################
+# GitHub CLI
+########################################
 
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -26,20 +38,52 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  && apt-get update \
  && apt-get install gh -y
 
+########################################
+# Agent Identity Files
+########################################
+
 COPY image/agent /agent
 RUN chown -R 1000:1000 /agent
+
+########################################
+# Skills
+########################################
 
 COPY skills /app/skills
 RUN chown -R 1000:1000 /app/skills
 
+########################################
+# Tools
+########################################
+
 COPY image/tools /tools
-RUN chmod +x /tools/*.sh \
+RUN chmod -R +x /tools \
  && chown -R 1000:1000 /tools
 
-ENV PATH="/tools:${PATH}"
+########################################
+# Playbooks
+########################################
+
+COPY image/playbooks /playbooks
+RUN chmod -R +x /playbooks \
+ && chown -R 1000:1000 /playbooks
+
+########################################
+# PATH
+########################################
+
+ENV PATH="/tools:/playbooks:${PATH}"
+
+########################################
+# Bootstrap
+########################################
 
 COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
+
+########################################
+# Workspace
+########################################
 
 RUN mkdir -p /data/workspace
 RUN mkdir -p /data/.openclaw/workspace
