@@ -29,9 +29,14 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 COPY image/agent /agent
 RUN chown -R 1000:1000 /agent
 
+COPY skills /app/skills
+RUN chown -R 1000:1000 /app/skills
+
 COPY image/tools /tools
 RUN chmod +x /tools/*.sh \
  && chown -R 1000:1000 /tools
+
+ENV PATH="/tools:${PATH}"
 
 COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh

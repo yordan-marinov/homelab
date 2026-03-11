@@ -45,20 +45,7 @@ fi
 
 echo "Installing agent configuration"
 
-AGENT_SRC=/agent
-AGENT_DST=/data/.openclaw/workspace
-
-mkdir -p "$AGENT_DST"
-
-cp $AGENT_SRC/*.md $AGENT_DST/
-
-########################################
-# Setup agent workspace
-########################################
-
-echo "Installing agent configuration"
-
-cp $AGENT_SRC/*.md $AGENT_DST/
+cp "$AGENT_SRC"/*.md "$AGENT_DST"/
 
 ########################################
 # Verify cluster access
@@ -69,11 +56,20 @@ echo "Checking Kubernetes access"
 kubectl get nodes || true
 
 ########################################
+# Verify skills
+########################################
+
+echo "Available skills"
+
+ls -R /app/skills || true
+
+########################################
 # Agent configuration summary
 ########################################
 
 echo "Agent identity loaded from:"
-ls -la $AGENT_DST
+
+ls -la "$AGENT_DST"
 
 echo "=== Bootstrap complete ==="
 
