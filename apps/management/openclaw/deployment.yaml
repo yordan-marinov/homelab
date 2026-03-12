@@ -30,7 +30,7 @@ spec:
       containers:
 
         - name: openclaw
-          image: ghcr.io/mvg-labs/openclaw-sre:1.13
+          image: ghcr.io/mvg-labs/openclaw-sre:1.14
           imagePullPolicy: Always
 
           ports:

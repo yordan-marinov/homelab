@@ -54,13 +54,15 @@ RUN mkdir -p /data/workspace \
  && mkdir -p /data/.openclaw/workspace/skills
 
 ########################################
-# Copy Custom Skills
+# Custom Skills
 ########################################
 
-COPY skills /data/.openclaw/workspace/skills
+RUN mkdir -p /skills/custom
 
-RUN chmod -R +x /data/.openclaw/workspace/skills \
- && chown -R 1000:1000 /data/.openclaw
+COPY skills /skills/custom
+
+RUN echo "===== DEBUG: Custom skills copied during build =====" \
+ && ls -R /skills/custom || echo "No custom skills found during build"
 
 ########################################
 # Bootstrap

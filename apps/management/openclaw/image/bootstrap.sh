@@ -59,9 +59,20 @@ kubectl get nodes || true
 # Verify skills
 ########################################
 
-echo "Available skills"
+echo "===== Skill Debug ====="
 
-ls -R /app/skills || true
+echo "Default skills directory:"
+ls /skills | head -10
+
+echo
+echo "Custom skills directory:"
+ls /skills/custom 2>/dev/null || echo "No custom skills directory"
+
+echo
+echo "Custom skill files:"
+find /skills/custom -name SKILL.md 2>/dev/null || echo "No SKILL.md files found"
+
+echo "======================="
 
 ########################################
 # Agent configuration summary
