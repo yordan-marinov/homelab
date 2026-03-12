@@ -1,0 +1,3 @@
+#!/bin/bash
+
+kubectl get pods -A --field-selector=status.phase=Running

@@ -46,33 +46,14 @@ COPY image/agent /agent
 RUN chown -R 1000:1000 /agent
 
 ########################################
-# Skills
+# Custom Skills (workspace skills)
 ########################################
 
-COPY skills /app/skills
-RUN chown -R 1000:1000 /app/skills
+RUN mkdir -p /data/.openclaw/workspace/skills
 
-########################################
-# Tools
-########################################
+COPY skills /data/.openclaw/workspace/skills
 
-COPY image/tools /tools
-RUN chmod -R +x /tools \
- && chown -R 1000:1000 /tools
-
-########################################
-# Playbooks
-########################################
-
-COPY image/playbooks /playbooks
-RUN chmod -R +x /playbooks \
- && chown -R 1000:1000 /playbooks
-
-########################################
-# PATH
-########################################
-
-ENV PATH="/tools:/playbooks:${PATH}"
+RUN chown -R 1000:1000 /data/.openclaw
 
 ########################################
 # Bootstrap
@@ -82,7 +63,7 @@ COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
 
 ########################################
-# Workspace
+# Workspace directories
 ########################################
 
 RUN mkdir -p /data/workspace
