@@ -39,21 +39,28 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
  && apt-get install gh -y
 
 ########################################
-# Agent Identity Files
+# Agent Identity
 ########################################
 
 COPY image/agent /agent
 RUN chown -R 1000:1000 /agent
 
 ########################################
-# Custom Skills (workspace skills)
+# Create OpenClaw workspace
 ########################################
 
-RUN mkdir -p /data/.openclaw/workspace/skills
+RUN mkdir -p /data/workspace \
+ && mkdir -p /data/.openclaw/workspace \
+ && mkdir -p /data/.openclaw/workspace/skills
+
+########################################
+# Copy Custom Skills
+########################################
 
 COPY skills /data/.openclaw/workspace/skills
 
-RUN chown -R 1000:1000 /data/.openclaw
+RUN chmod -R +x /data/.openclaw/workspace/skills \
+ && chown -R 1000:1000 /data/.openclaw
 
 ########################################
 # Bootstrap
@@ -61,13 +68,6 @@ RUN chown -R 1000:1000 /data/.openclaw
 
 COPY image/bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh
-
-########################################
-# Workspace directories
-########################################
-
-RUN mkdir -p /data/workspace
-RUN mkdir -p /data/.openclaw/workspace
 
 USER 1000
 
