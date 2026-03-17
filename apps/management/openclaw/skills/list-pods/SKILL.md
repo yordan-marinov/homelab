@@ -1,6 +1,6 @@
 ---
 name: list_pods
-description: List running pods in the Kubernetes cluster.
+description: List all running pods in the Kubernetes cluster.
 ---
 
 # List Pods Skill
@@ -9,17 +9,11 @@ Use this skill when the user asks about:
 
 - running pods
 - pod count
-- pod status
+- list pods
+- show cluster pods
 
-Examples:
+## Execution
 
-- "how many pods are running"
-- "show pods"
-- "list pods"
+Run the following script locally:
 
-## Workflow
-
-Run:
-
-scripts/list_pods.sh
 
