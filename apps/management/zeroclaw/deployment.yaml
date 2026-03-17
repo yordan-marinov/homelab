@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeroclaw-sre
+  namespace: management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeroclaw-sre
+  template:
+    metadata:
+      labels:
+        app: zeroclaw-sre
+    spec:
+      serviceAccountName: zeroclaw-sre-sa
+
+      initContainers:
+        - name: repo-provisioner
+          image: alpine/git
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cd /work
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/brainbox-mirror.git brainbox
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab-mgmt-infra.git infra
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+
+      containers:
+        - name: agent
+          image: ghcr.io/mvg-labs/zeroclaw-sre:latest
+          imagePullPolicy: Always
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: OPENAI_API_BASE
+              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+
+            - name: ZEROCLAW_WORKSPACE
+              value: "/work/homelab"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
+
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+              zeroclaw gateway --bind 0.0.0.0 --port 18789
+
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+          ports:
+            - containerPort: 18789
+      volumes:
+        - name: workspace
+          emptyDir: {}
