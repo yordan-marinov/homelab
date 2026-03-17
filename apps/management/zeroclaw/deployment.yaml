@@ -39,31 +39,42 @@ spec:
               mountPath: /work
 
       containers:
-        # --- The Agent ---
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
+          imagePullPolicy: Always
           env:
             - name: OPENAI_API_KEY
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-            - name: ZEROCLAW_WORKSPACE
-              value: "/work/git/homelab/apps/management/zeroclaw"
             - name: HOME
               value: "/work"
+            - name: ZEROCLAW_CONFIG_PATH
+              value: "/work/config.toml"
+            - name: ZEROCLAW_WORKSPACE
+              value: "/work/git/homelab/apps/management/zeroclaw"
+            # --- THIS IS YOUR PERMANENT TOKEN ---
+            - name: SRE_STATIC_TOKEN
+              value: "mvg-labs-sre-super-secret-token-2024"
           command: ["/bin/bash", "-c"]
           args:
             - |
-              mkdir -p ~/.zeroclaw
+              mkdir -p /work/.zeroclaw
 
-              if [ ! -f "/work/config.toml" ]; then
+              # 1. Create config with STATIC TOKEN if it doesn't exist
+              if [ ! -f "$ZEROCLAW_CONFIG_PATH" ]; then
+                echo "[BOOTSTRAP] Initializing Permanent SRE Identity..."
                 zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-                sed -i '/\[gateway\]/,$d' /work/config.toml
-                cat <<EOF >> /work/config.toml
+
+                sed -i '/\[gateway\]/,$d' "$ZEROCLAW_CONFIG_PATH"
+                cat <<EOF >> "$ZEROCLAW_CONFIG_PATH"
               [gateway]
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
+              # This makes the API token permanent
+              api_token = "$SRE_STATIC_TOKEN"
+              pairing_enabled = false
 
               [workspace]
               identity_path = "/work/git/homelab/apps/management/zeroclaw/core/IDENTITY.md"
@@ -72,26 +83,19 @@ spec:
               user_path = "/work/git/homelab/apps/management/zeroclaw/core/USER.md"
 
               [skills]
-              # The agent will scan every sub-folder in this directory
               paths = ["/work/git/homelab/apps/management/zeroclaw/skills"]
               EOF
               fi
 
-              zeroclaw daemon > /work/agent.log 2>&1 &
-
-              sleep 10
-              if grep -q "one-time code" /work/agent.log; then
-                CODE=$(grep -A 2 "one-time code" /work/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: \$CODE"
-              fi
-              tail -f /work/agent.log
+              # 2. Start Daemon (It will now use the static token from the config)
+              echo "[BOOTSTRAP] SRE Agent Starting with Static Auth..."
+              exec zeroclaw daemon
           volumeMounts:
             - name: workspace
               mountPath: /work
           ports:
             - containerPort: 18789
 
-        # --- The Sync Sidecar ---
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
           args:
