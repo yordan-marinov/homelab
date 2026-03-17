@@ -52,12 +52,16 @@ spec:
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef: { name: zeroclaw-app-secrets, key: github_token }
+            - name: ZEROCLAW_GATEWAY_HOST
+              value: "0.0.0.0"
           command: ["/bin/sh", "-c"]
           args:
             - |
               mkdir -p ~/.zeroclaw
+              # Using the model name from your logs: homecrew-sre-brain
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-              zeroclaw gateway --bind 0.0.0.0 --port 18789
+              # Updated command: removed --bind, using --port
+              zeroclaw gateway --port 18789
           volumeMounts:
             - name: workspace
               mountPath: /work
