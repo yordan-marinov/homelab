@@ -13,22 +13,27 @@ SKILLS_DST="/app/skills"
 sync_repo() {
     local url=$1
     local dir=$2
+    mkdir -p "$REPOS_ROOT"
     if [ ! -d "$dir/.git" ]; then
         echo "[BOOTSTRAP] Cloning $url..."
         git clone "$url" "$dir"
     else
-        echo "[BOOTSTRAP] Refreshing $dir..."
+        echo "[BOOTSTRAP] Pulling latest from $url..."
         cd "$dir" && git pull
     fi
 }
 
 sync_repo "https://github.com/yordan-marinov/homelab.git" "$HOMELAB_DIR"
-
 sync_repo "https://github.com/yordan-marinov/brainbox-mirror.git" "$BRAINBOX_DIR"
 
-echo "[BOOTSTRAP] Injecting custom skills..."
+echo "[BOOTSTRAP] Syncing custom skills..."
 mkdir -p "$SKILLS_DST"
 rsync -av --delete "$SKILLS_SRC/" "$SKILLS_DST/"
 
+echo "[BOOTSTRAP] Current skills:"
+ls "$SKILLS_DST"
+
 cd /app
+
+echo "[BOOTSTRAP] Starting OpenClaw..."
 exec "$@"

@@ -3,7 +3,6 @@ kind: ConfigMap
 metadata:
   name: openclaw-config
   namespace: management
-
 data:
   openclaw.json: |
     {
@@ -11,22 +10,14 @@ data:
         "mode": "local",
         "bind": "lan",
         "port": 18789,
-        "trustedProxies": [
-          "10.0.0.0/8",
-          "10.244.0.0/16"
-        ],
         "controlUi": {
           "enabled": true,
-          "allowedOrigins": [
-            "https://claw.mvgates.com"
-          ]
+          "allowedOrigins": ["https://claw.mvgates.com", "https://ai.mvgates.com"]
         }
       },
-
       "llm": {
         "provider": "openai",
         "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
         "model": "homecrew-sre-brain"
       }
     }
-

@@ -23,9 +23,15 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/mvg-labs/openclaw-sre:1.15
+          imagePullPolicy: Always
           command: ["/bootstrap.sh"]
-          args: ["node", "dist/index.js", "gateway"]
+          args:
+            - "node"
+            - "/app/dist/index.js"
+            - "gateway"
           env:
+            - name: HOME
+              value: /data
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000
             - name: LITELLM_API_KEY
@@ -47,9 +53,9 @@ spec:
           args:
             - |
               while true; do
-                echo "Syncing Repos..."
-                cd /data/repos/homelab && git pull
-                cd /data/repos/brainbox && git pull
+                echo "Background Syncing Repos..."
+                cd /data/repos/homelab && git pull || true
+                cd /data/repos/brainbox && git pull || true
                 rsync -av --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
                 sleep 300
               done
