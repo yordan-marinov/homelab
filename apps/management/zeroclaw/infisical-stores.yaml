@@ -1,7 +1,8 @@
 apiVersion: external-secrets.io/v1
-kind: ClusterSecretStore
+kind: SecretStore
 metadata:
   name: zeroclaw-ghcr-store
+  namespace: management
 spec:
   provider:
     infisical:
@@ -16,9 +17,10 @@ spec:
         secretsPath: /services/ghcr
 ---
 apiVersion: external-secrets.io/v1
-kind: ClusterSecretStore
+kind: SecretStore
 metadata:
   name: zeroclaw-app-store
+  namespace: management
 spec:
   provider:
     infisical:
