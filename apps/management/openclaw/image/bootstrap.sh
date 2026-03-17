@@ -10,30 +10,16 @@ BRAINBOX_DIR="$REPOS_ROOT/brainbox"
 SKILLS_SRC="$HOMELAB_DIR/apps/management/openclaw/skills"
 SKILLS_DST="/app/skills"
 
-sync_repo() {
-    local url=$1
-    local dir=$2
-    mkdir -p "$REPOS_ROOT"
-    if [ ! -d "$dir/.git" ]; then
-        echo "[BOOTSTRAP] Cloning $url..."
-        git clone "$url" "$dir"
-    else
-        echo "[BOOTSTRAP] Pulling latest from $url..."
-        cd "$dir" && git pull
-    fi
-}
+mkdir -p "$REPOS_ROOT"
+[ ! -d "$HOMELAB_DIR/.git" ] && git clone https://github.com/yordan-marinov/homelab.git "$HOMELAB_DIR" || (cd "$HOMELAB_DIR" && git pull)
+[ ! -d "$BRAINBOX_DIR/.git" ] && git clone https://github.com/yordan-marinov/brainbox-mirror.git "$BRAINBOX_DIR" || (cd "$BRAINBOX_DIR" && git pull)
 
-sync_repo "https://github.com/yordan-marinov/homelab.git" "$HOMELAB_DIR"
-sync_repo "https://github.com/yordan-marinov/brainbox-mirror.git" "$BRAINBOX_DIR"
-
-echo "[BOOTSTRAP] Syncing custom skills..."
 mkdir -p "$SKILLS_DST"
 rsync -av --delete "$SKILLS_SRC/" "$SKILLS_DST/"
 
-echo "[BOOTSTRAP] Current skills:"
-ls "$SKILLS_DST"
+ln -sf /data/openclaw.json /app/openclaw.json
 
 cd /app
+echo "[BOOTSTRAP] Initialization complete. Starting OpenClaw..."
 
-echo "[BOOTSTRAP] Starting OpenClaw..."
 exec "$@"
