@@ -14,14 +14,19 @@ spec:
         app: zeroclaw-sre
     spec:
       serviceAccountName: zeroclaw-sre-sa
-
+      imagePullSecrets:
+        - name: zeroclaw-ghcr-pull-secret # Uses NEW ES secret
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       initContainers:
         - name: repo-provisioner
           image: alpine/git
           env:
             - name: GITHUB_TOKEN
               valueFrom:
-                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
+                secretKeyRef: { name: zeroclaw-app-secrets, key: github_token }
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -32,7 +37,6 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /work
-
       containers:
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
@@ -40,22 +44,20 @@ spec:
           env:
             - name: OPENAI_API_KEY
               valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+                secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key }
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-
             - name: ZEROCLAW_WORKSPACE
               value: "/work/homelab"
             - name: GITHUB_TOKEN
               valueFrom:
-                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
-
+                secretKeyRef: { name: zeroclaw-app-secrets, key: github_token }
           command: ["/bin/sh", "-c"]
           args:
             - |
+              mkdir -p ~/.zeroclaw
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
               zeroclaw gateway --bind 0.0.0.0 --port 18789
-
           volumeMounts:
             - name: workspace
               mountPath: /work

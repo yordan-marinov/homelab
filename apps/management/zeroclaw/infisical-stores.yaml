@@ -30,4 +30,4 @@ spec:
       secretsScope:
         projectSlug: homelab-cluster-z-u-bm
         environmentSlug: prod
-        secretsPath: /services/openclaw
+        secretsPath: /services/zeroclaw
