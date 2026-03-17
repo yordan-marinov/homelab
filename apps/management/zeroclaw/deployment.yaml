@@ -28,16 +28,22 @@ spec:
           args:
             - |
               cd /work
-              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
-              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/brainbox-mirror.git brainbox
-              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab-mgmt-infra.git infra
+              for repo in homelab brainbox-mirror homelab-mgmt-infra; do
+                folder=$(echo $repo | sed 's/-mirror//; s/homelab-mgmt-//') # matches your prev naming
+                if [ -d "$folder/.git" ]; then
+                  echo "Updating $folder..."
+                  cd $folder && git pull && cd ..
+                else
+                  echo "Cloning $repo..."
+                  git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/$repo.git $folder
+                fi
+              done
           volumeMounts:
             - name: workspace
               mountPath: /work
       containers:
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
-          imagePullPolicy: Always
           env:
             - name: OPENAI_API_KEY
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
@@ -45,41 +51,31 @@ spec:
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: ZEROCLAW_WORKSPACE
               value: "/work/homelab"
-            - name: SRE_API_TOKEN
-              value: "homecrew-sre-secure-token-123"
           command: ["/bin/bash", "-c"]
           args:
             - |
-              mkdir -p ~/.zeroclaw
-
-              echo "[1/4] Onboarding Agent..."
-              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-
-              echo "[2/4] Patching Gateway Safety..."
-              sed -i '/\[gateway\]/,$d' /work/homelab/config.toml
-              cat <<EOF >> /work/homelab/config.toml
+              # Only onboard if config doesn't exist
+              if [ ! -f "/work/homelab/config.toml" ]; then
+                zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+                sed -i '/\[gateway\]/,$d' /work/homelab/config.toml
+                cat <<EOF >> /work/homelab/config.toml
               [gateway]
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
               EOF
+              fi
 
-              echo "[3/4] Starting Daemon and Self-Pairing..."
+              # Start daemon in background
               zeroclaw daemon > /tmp/agent.log 2>&1 &
 
-              echo "Waiting for pairing code..."
-              for i in {1..30}; do
-                if grep -q "one-time code" /tmp/agent.log; then
-                  CODE=$(grep -A 2 "one-time code" /tmp/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                  echo "Found code: $CODE. Performing self-pairing..."
-                  curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $CODE"
-                  echo "Self-pairing complete."
-                  break
-                fi
-                sleep 2
-              done
+              # If not paired yet, do it
+              sleep 5
+              if grep -q "one-time code" /tmp/agent.log; then
+                CODE=$(grep -A 2 "one-time code" /tmp/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
+                curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $CODE"
+              fi
 
-              echo "[4/4] SRE Agent is Online. Streaming logs..."
               tail -f /tmp/agent.log
           volumeMounts:
             - name: workspace
@@ -88,4 +84,5 @@ spec:
             - containerPort: 18789
       volumes:
         - name: workspace
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: zeroclaw-workspace-pvc
