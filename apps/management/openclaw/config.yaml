@@ -26,7 +26,7 @@ data:
       "llm": {
         "provider": "openai",
         "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
-        "model": "default"
+        "model": "homecrew-sre-brain"
       }
     }
 

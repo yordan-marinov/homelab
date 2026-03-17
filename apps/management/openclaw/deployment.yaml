@@ -3,126 +3,81 @@ kind: Deployment
 metadata:
   name: openclaw
   namespace: management
-
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app: openclaw
-
   template:
     metadata:
       labels:
         app: openclaw
-
     spec:
       serviceAccountName: openclaw-sa
-
       imagePullSecrets:
         - name: ghcr-secret
-
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-
       containers:
         - name: openclaw
-
           image: ghcr.io/mvg-labs/openclaw-sre:1.15
           imagePullPolicy: Always
-
-          command:
-            - /bootstrap.sh
-
-          args:
-            - node
-            - dist/index.js
-            - gateway
-
+          command: ["/bootstrap.sh"]
+          args: ["node", "dist/index.js", "gateway"]
           ports:
             - containerPort: 18789
-
           env:
             - name: HOME
               value: /data
-
-            - name: OPENCLAW_STATE_DIR
-              value: /data
-
-            - name: OPENCLAW_WORKSPACE_DIR
-              value: /data/workspace
-
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000
-
             - name: LITELLM_API_KEY
               valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: virtual_key
-
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-secrets
-                  key: gateway_token
-
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-agent-secret
-                  key: github_token
-
-            - name: GIT_AUTHOR_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-agent-secret
-                  key: git_user_name
-
-            - name: GIT_AUTHOR_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-agent-secret
-                  key: git_user_email
-
+                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
           volumeMounts:
             - name: openclaw-data
               mountPath: /data
-
             - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
+            - name: homelab-repo
+              mountPath: /data/workspace/homelab-context
+              readOnly: true
+            - name: brainbox
+              mountPath: /data/workspace/brainbox
+              readOnly: true
 
-            - name: workspace
-              mountPath: /data/workspace
-
-          readinessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 15
-            periodSeconds: 10
-
-          livenessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 40
-            periodSeconds: 20
-
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+        - name: skill-watcher
+          image: alpine/git
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while true; do
+                echo "Checking Git for new skills..."
+                cd /data/repos/homelab && git pull
+                rsync -av --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
+                sleep 120
+              done
+          volumeMounts:
+            - name: homelab-repo
+              mountPath: /data/repos/homelab
+            - name: openclaw-data
+              mountPath: /data
 
       volumes:
         - name: openclaw-data
           persistentVolumeClaim:
             claimName: openclaw-data
-
         - name: openclaw-config
           configMap:
             name: openclaw-config
-
-        - name: workspace
-          emptyDir: {}
-
+        - name: homelab-repo
+          nfs:
+            server: 192.168.120.4
+            path: /mnt/nas_soul/homelab
+        - name: brainbox
+          nfs:
+            server: 192.168.120.4
+            path: /mnt/nas_soul/lab/brainbox
