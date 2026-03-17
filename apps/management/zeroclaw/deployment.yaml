@@ -52,16 +52,24 @@ spec:
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef: { name: zeroclaw-app-secrets, key: github_token }
-            - name: ZEROCLAW_GATEWAY_HOST
+
+            - name: ZEROCLAW_DAEMON_HOST
               value: "0.0.0.0"
+            - name: ZEROCLAW_DAEMON_PORT
+              value: "18789"
+            - name: ZEROCLAW_LOG_LEVEL
+              value: "info"
+
           command: ["/bin/sh", "-c"]
           args:
             - |
               mkdir -p ~/.zeroclaw
-              # Using the model name from your logs: homecrew-sre-brain
+              # Onboard once to generate the config.toml
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-              # Updated command: removed --bind, using --port
-              zeroclaw gateway --port 18789
+
+              # Start the DAEMON instead of the Gateway
+              # This runs the agent loop and the API without interactive pairing
+              zeroclaw daemon
           volumeMounts:
             - name: workspace
               mountPath: /work
