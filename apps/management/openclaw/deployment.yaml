@@ -1,105 +1,72 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: openclaw
+  name: zeroclaw-sre
   namespace: management
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: openclaw
+      app: zeroclaw-sre
   template:
     metadata:
       labels:
-        app: openclaw
+        app: zeroclaw-sre
     spec:
-      serviceAccountName: openclaw-sa
+      serviceAccountName: zeroclaw-sre-sa
+
       imagePullSecrets:
-        - name: ghcr-secret
+        - name: ghcr-secret # Fetched by ExternalSecret above
+
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-      containers:
-        - name: openclaw
-          image: ghcr.io/mvg-labs/openclaw-sre:1.15
-          imagePullPolicy: Always
-          command: ["/bootstrap.sh"]
-          args:
-            - node
-            - dist/index.js
-            - gateway
-          ports:
-            - containerPort: 18789
+
+      initContainers:
+        - name: repo-provisioner
+          image: alpine/git
           env:
-            - name: HOME
-              value: /data
-            - name: OPENCLAW_STATE_DIR
-              value: /data
-            - name: OPENCLAW_WORKSPACE_DIR
-              value: /data/workspace
-            - name: OPENAI_API_BASE
-              value: http://litellm-service.ai-core.svc.cluster.local:4000
-            - name: LITELLM_API_KEY
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GITHUB_TOKEN
               valueFrom:
-                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
-            - name: GIT_AUTHOR_NAME
-              valueFrom:
-                secretKeyRef: { name: openclaw-agent-secret, key: git_user_name }
-            - name: GIT_AUTHOR_EMAIL
-              valueFrom:
-                secretKeyRef: { name: openclaw-agent-secret, key: git_user_email }
-          volumeMounts:
-            - name: openclaw-data
-              mountPath: /data
-            - name: openclaw-config
-              mountPath: /data/openclaw.json
-              subPath: openclaw.json
-            - name: workspace
-              mountPath: /data/workspace
-          readinessProbe:
-            tcpSocket: { port: 18789 }
-            initialDelaySeconds: 15
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket: { port: 18789 }
-            initialDelaySeconds: 40
-            periodSeconds: 20
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
-
-        - name: git-sync
-          image: alpine/git
-          securityContext:
-            runAsUser: 1000
+                secretKeyRef: { name: zeroclaw-secrets, key: github_token }
           command: ["/bin/sh", "-c"]
           args:
             - |
-              while true; do
-                # Sync code and knowledge quietly every 5 mins
-                cd /data/repos/homelab && git pull -q || true
-                cd /data/repos/brainbox && git pull -q || true
-                # Sync skills into the app directory
-                rsync -a --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
-                sleep 300
-              done
+              cd /work
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/brainbox-mirror.git brainbox
+              git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab-mgmt-infra.git infra
           volumeMounts:
-            - name: openclaw-data
-              mountPath: /data
+            - name: workspace
+              mountPath: /work
 
+      containers:
+        - name: agent
+          image: ghcr.io/mvg-labs/zeroclaw-sre:latest
+          imagePullPolicy: Always
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: zeroclaw-secrets, key: virtual_key }
+            - name: OPENAI_API_BASE
+              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+            - name: ZEROCLAW_WORKSPACE
+              value: "/work/homelab"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: zeroclaw-secrets, key: github_token }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p ~/.zeroclaw
+              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+              zeroclaw gateway --bind 0.0.0.0 --port 18789
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+          ports:
+            - containerPort: 18789
       volumes:
-        - name: openclaw-data
-          persistentVolumeClaim:
-            claimName: openclaw-data
-        - name: openclaw-config
-          configMap:
-            name: openclaw-config
         - name: workspace
           emptyDir: {}
