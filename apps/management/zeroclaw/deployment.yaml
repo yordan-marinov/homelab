@@ -6,12 +6,10 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: zeroclaw-sre
+    matchLabels: { app: zeroclaw-sre }
   template:
     metadata:
-      labels:
-        app: zeroclaw-sre
+      labels: { app: zeroclaw-sre }
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets:
@@ -25,8 +23,7 @@ spec:
           image: alpine/git
           env:
             - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef: { name: zeroclaw-app-secrets, key: github_token }
+              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: github_token } }
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -43,8 +40,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key }
+              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: ZEROCLAW_WORKSPACE
@@ -59,13 +55,16 @@ spec:
               echo "[1/3] Onboarding Agent..."
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Patching Config for Headless K8s Mode..."
-              # Force 0.0.0.0 so the K8s Service can reach the pod
-              sed -i 's/127.0.0.1/0.0.0.0/g' /work/homelab/config.toml
-              # Force our desired port
-              sed -i 's/42617/18789/g' /work/homelab/config.toml
-              # Inject the static token to bypass pairing UI
-              echo "gateway_token = \"$ZEROCLAW_STATIC_TOKEN\"" >> /work/homelab/config.toml
+              echo "[2/3] Configuring Gateway for K8s Isolation..."
+              # Append the [gateway] block with the required security bypass
+              cat <<EOF >> /work/homelab/config.toml
+
+              [gateway]
+              host = "0.0.0.0"
+              port = 18789
+              allow_public_bind = true
+              token = "$ZEROCLAW_STATIC_TOKEN"
+              EOF
 
               echo "[3/3] Starting ZeroClaw SRE Daemon..."
               exec zeroclaw daemon
