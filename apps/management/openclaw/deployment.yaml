@@ -26,40 +26,68 @@ spec:
           imagePullPolicy: Always
           command: ["/bootstrap.sh"]
           args:
-            - "node"
-            - "/app/dist/index.js"
-            - "gateway"
-            - "--config"
-            - "/data/openclaw.json"
+            - node
+            - dist/index.js
+            - gateway
+          ports:
+            - containerPort: 18789
           env:
             - name: HOME
               value: /data
-            - name: OPENCLAW_CONFIG
-              value: /data/openclaw.json
+            - name: OPENCLAW_STATE_DIR
+              value: /data
+            - name: OPENCLAW_WORKSPACE_DIR
+              value: /data/workspace
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000
             - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-agent-secret, key: github_token }
+            - name: GIT_AUTHOR_NAME
+              valueFrom:
+                secretKeyRef: { name: openclaw-agent-secret, key: git_user_name }
+            - name: GIT_AUTHOR_EMAIL
+              valueFrom:
+                secretKeyRef: { name: openclaw-agent-secret, key: git_user_email }
           volumeMounts:
             - name: openclaw-data
               mountPath: /data
             - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
+            - name: workspace
+              mountPath: /data/workspace
+          readinessProbe:
+            tcpSocket: { port: 18789 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 18789 }
+            initialDelaySeconds: 40
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
 
         - name: git-sync
           image: alpine/git
+          securityContext:
+            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
               while true; do
-                cd /data/repos/homelab && git pull || true
-                cd /data/repos/brainbox && git pull || true
-                rsync -av --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
+                # Sync code and knowledge quietly every 5 mins
+                cd /data/repos/homelab && git pull -q || true
+                cd /data/repos/brainbox && git pull -q || true
+                # Sync skills into the app directory
+                rsync -a --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
                 sleep 300
               done
           volumeMounts:
@@ -73,3 +101,5 @@ spec:
         - name: openclaw-config
           configMap:
             name: openclaw-config
+        - name: workspace
+          emptyDir: {}
