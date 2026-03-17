@@ -22,47 +22,38 @@ spec:
         fsGroup: 1000
       containers:
         - name: openclaw
-          image: ghcr.io/mvg-labs/openclaw-sre:1.16
-          imagePullPolicy: Always
+          image: ghcr.io/mvg-labs/openclaw-sre:1.15
           command: ["/bootstrap.sh"]
           args: ["node", "dist/index.js", "gateway"]
-          ports:
-            - containerPort: 18789
           env:
-            - name: HOME
-              value: /data
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000
             - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-agent-secret, key: github_token }
           volumeMounts:
             - name: openclaw-data
               mountPath: /data
             - name: openclaw-config
               mountPath: /data/openclaw.json
               subPath: openclaw.json
-            - name: homelab-repo
-              mountPath: /data/workspace/homelab-context
-              readOnly: true
-            - name: brainbox
-              mountPath: /data/workspace/brainbox
-              readOnly: true
 
-        - name: skill-watcher
+        - name: git-sync
           image: alpine/git
           command: ["/bin/sh", "-c"]
           args:
             - |
               while true; do
-                echo "Checking Git for new skills..."
+                echo "Syncing Repos..."
                 cd /data/repos/homelab && git pull
+                cd /data/repos/brainbox && git pull
                 rsync -av --delete /data/repos/homelab/apps/management/openclaw/skills/ /app/skills/
-                sleep 120
+                sleep 300
               done
           volumeMounts:
-            - name: homelab-repo
-              mountPath: /data/repos/homelab
             - name: openclaw-data
               mountPath: /data
 
@@ -73,11 +64,3 @@ spec:
         - name: openclaw-config
           configMap:
             name: openclaw-config
-        - name: homelab-repo
-          nfs:
-            server: 192.168.120.4
-            path: /mnt/nas_soul/homelab
-        - name: brainbox
-          nfs:
-            server: 192.168.120.4
-            path: /mnt/nas_soul/lab/brainbox
