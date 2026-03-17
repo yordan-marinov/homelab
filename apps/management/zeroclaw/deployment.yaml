@@ -15,6 +15,8 @@ spec:
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
+
+      # Global security context for the whole pod
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -23,16 +25,24 @@ spec:
       initContainers:
         - name: repo-provisioner
           image: alpine/git
+          # --- FIX: Ensure init container runs as user 1000 ---
+          securityContext:
+            runAsUser: 1000
           env:
             - name: GITHUB_TOKEN
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: github_token } }
           command: ["/bin/sh", "-c"]
           args:
             - |
+              set -e
               mkdir -p /work/git
               cd /work/git
+              # Check if repo exists, if not clone it. If it does, do nothing (git-sync will handle it).
               if [ ! -d "homelab/.git" ]; then
+                echo "Cloning homelab repo..."
                 git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
+              else
+                echo "Repo already exists on PVC, skipping clone."
               fi
           volumeMounts:
             - name: workspace
@@ -53,7 +63,6 @@ spec:
               value: "/work/config.toml"
             - name: ZEROCLAW_WORKSPACE
               value: "/work/git/homelab/apps/management/zeroclaw"
-            # --- THIS IS YOUR PERMANENT TOKEN ---
             - name: SRE_STATIC_TOKEN
               value: "mvg-labs-sre-super-secret-token-2024"
           command: ["/bin/bash", "-c"]
@@ -61,7 +70,6 @@ spec:
             - |
               mkdir -p /work/.zeroclaw
 
-              # 1. Create config with STATIC TOKEN if it doesn't exist
               if [ ! -f "$ZEROCLAW_CONFIG_PATH" ]; then
                 echo "[BOOTSTRAP] Initializing Permanent SRE Identity..."
                 zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
@@ -72,7 +80,6 @@ spec:
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
-              # This makes the API token permanent
               api_token = "$SRE_STATIC_TOKEN"
               pairing_enabled = false
 
@@ -87,7 +94,6 @@ spec:
               EOF
               fi
 
-              # 2. Start Daemon (It will now use the static token from the config)
               echo "[BOOTSTRAP] SRE Agent Starting with Static Auth..."
               exec zeroclaw daemon
           volumeMounts:
@@ -98,6 +104,8 @@ spec:
 
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          securityContext:
+            runAsUser: 1000
           args:
             - --repo=https://github.com/mvg-labs/homelab.git
             - --branch=main
