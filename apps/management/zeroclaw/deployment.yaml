@@ -47,6 +47,8 @@ spec:
               value: "/work/homelab"
             - name: ZEROCLAW_STATIC_TOKEN
               value: "homecrew-sre-secure-token-123"
+            - name: ZEROCLAW_API_TOKEN
+              value: "homecrew-sre-secure-token-123"
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -55,9 +57,8 @@ spec:
               echo "[1/3] Onboarding Agent..."
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Patching Config (Removing duplicates)..."
-              # This line deletes from the first '[gateway]' match to the end of the file
-              # to ensure we don't have duplicate keys.
+              echo "[2/3] Patching Config (Removing defaults and disabling pairing)..."
+              # Delete from [gateway] match to the end of file
               sed -i '/\[gateway\]/,$d' /work/homelab/config.toml
 
               # Append the fresh, correct gateway block
@@ -67,7 +68,8 @@ spec:
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
-              token = "$ZEROCLAW_STATIC_TOKEN"
+              api_token = "$ZEROCLAW_STATIC_TOKEN"
+              pairing_enabled = false
               EOF
 
               echo "[3/3] Starting ZeroClaw SRE Daemon..."
