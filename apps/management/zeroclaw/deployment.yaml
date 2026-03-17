@@ -45,35 +45,42 @@ spec:
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: ZEROCLAW_WORKSPACE
               value: "/work/homelab"
-            - name: ZEROCLAW_STATIC_TOKEN
+            - name: SRE_API_TOKEN
               value: "homecrew-sre-secure-token-123"
-            - name: ZEROCLAW_API_TOKEN
-              value: "homecrew-sre-secure-token-123"
-          command: ["/bin/sh", "-c"]
+          command: ["/bin/bash", "-c"]
           args:
             - |
               mkdir -p ~/.zeroclaw
 
-              echo "[1/3] Onboarding Agent..."
+              echo "[1/4] Onboarding Agent..."
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Patching Config (Removing defaults and disabling pairing)..."
-              # Delete from [gateway] match to the end of file
+              echo "[2/4] Patching Gateway Safety..."
               sed -i '/\[gateway\]/,$d' /work/homelab/config.toml
-
-              # Append the fresh, correct gateway block
               cat <<EOF >> /work/homelab/config.toml
-
               [gateway]
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
-              api_token = "$ZEROCLAW_STATIC_TOKEN"
-              pairing_enabled = false
               EOF
 
-              echo "[3/3] Starting ZeroClaw SRE Daemon..."
-              exec zeroclaw daemon
+              echo "[3/4] Starting Daemon and Self-Pairing..."
+              zeroclaw daemon > /tmp/agent.log 2>&1 &
+
+              echo "Waiting for pairing code..."
+              for i in {1..30}; do
+                if grep -q "one-time code" /tmp/agent.log; then
+                  CODE=$(grep -A 2 "one-time code" /tmp/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
+                  echo "Found code: $CODE. Performing self-pairing..."
+                  curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $CODE"
+                  echo "Self-pairing complete."
+                  break
+                fi
+                sleep 2
+              done
+
+              echo "[4/4] SRE Agent is Online. Streaming logs..."
+              tail -f /tmp/agent.log
           volumeMounts:
             - name: workspace
               mountPath: /work
