@@ -19,25 +19,14 @@ spec:
     spec:
       serviceAccountName: openclaw-sa
 
-      imagePullSecrets:
-        - name: ghcr-secret
-
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-
       containers:
-
         - name: openclaw
-          image: ghcr.io/mvg-labs/openclaw-sre:1.14
-          imagePullPolicy: Always
+          image: ghcr.io/mvg-labs/openclaw-sre:1.15
 
           ports:
             - containerPort: 18789
 
           env:
-
             - name: HOME
               value: /data
 
@@ -48,16 +37,13 @@ spec:
               value: /data/workspace
 
             - name: OPENCLAW_SKILLS_DIR
-              value: /app/skills
-
-            - name: OPENCLAW_TOOLS_DIR
-              value: /tools
-
-            - name: OPENCLAW_PLAYBOOKS_DIR
-              value: /playbooks
+              value: /data/skills
 
             - name: OPENAI_API_BASE
               value: http://litellm-service.ai-core.svc.cluster.local:4000
+
+            - name: OPENAI_API_KEY
+              value: dummy-key
 
             - name: LITELLM_API_KEY
               valueFrom:
@@ -90,35 +76,17 @@ spec:
                   key: git_user_email
 
           volumeMounts:
-
             - name: openclaw-data
               mountPath: /data
 
             - name: openclaw-config
-              mountPath: /data/openclaw.json
+              mountPath: /agent/config/openclaw.json
               subPath: openclaw.json
-
-            - name: workspace
-              mountPath: /data/workspace
-
-          readinessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 15
-            periodSeconds: 10
-
-          livenessProbe:
-            tcpSocket:
-              port: 18789
-            initialDelaySeconds: 40
-            periodSeconds: 20
 
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
 
       volumes:
-
         - name: openclaw-data
           persistentVolumeClaim:
             claimName: openclaw-data
@@ -126,7 +94,4 @@ spec:
         - name: openclaw-config
           configMap:
             name: openclaw-config
-
-        - name: workspace
-          emptyDir: {}
 

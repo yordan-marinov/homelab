@@ -11,12 +11,10 @@ data:
         "mode": "local",
         "bind": "lan",
         "port": 18789,
-
         "trustedProxies": [
           "10.0.0.0/8",
           "10.244.0.0/16"
         ],
-
         "controlUi": {
           "enabled": true,
           "allowedOrigins": [
@@ -25,29 +23,10 @@ data:
         }
       },
 
-      "models": {
-        "providers": {
-          "litellm": {
-            "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
-            "apiKey": "${LITELLM_API_KEY}",
-            "api": "openai-completions",
-
-            "models": [
-              {
-                "id": "openai/gpt-4.1-nano",
-                "name": "GPT-4.1 Nano"
-              }
-            ]
-          }
-        }
-      },
-
-      "agents": {
-        "defaults": {
-          "model": {
-            "primary": "litellm/openai/gpt-4.1-nano"
-          }
-        }
+      "llm": {
+        "provider": "openai",
+        "baseUrl": "http://litellm-service.ai-core.svc.cluster.local:4000",
+        "model": "default"
       }
     }
 
