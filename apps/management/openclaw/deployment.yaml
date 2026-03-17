@@ -22,7 +22,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: openclaw
-          image: ghcr.io/mvg-labs/openclaw-sre:1.15
+          image: ghcr.io/mvg-labs/openclaw-sre:1.16
           imagePullPolicy: Always
           command: ["/bootstrap.sh"]
           args: ["node", "dist/index.js", "gateway"]
