@@ -6,18 +6,20 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: zeroclaw-sre }
+    matchLabels:
+      app: zeroclaw-sre
   template:
     metadata:
-      labels: { app: zeroclaw-sre }
+      labels:
+        app: zeroclaw-sre
     spec:
       serviceAccountName: zeroclaw-sre-sa
-      imagePullSecrets:
-        - name: zeroclaw-ghcr-pull-secret
+      imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+
       initContainers:
         - name: repo-provisioner
           image: alpine/git
@@ -27,21 +29,17 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              cd /work
-              for repo in homelab brainbox-mirror homelab-mgmt-infra; do
-                folder=$(echo $repo | sed 's/-mirror//; s/homelab-mgmt-//') # matches your prev naming
-                if [ -d "$folder/.git" ]; then
-                  echo "Updating $folder..."
-                  cd $folder && git pull && cd ..
-                else
-                  echo "Cloning $repo..."
-                  git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/$repo.git $folder
-                fi
-              done
+              mkdir -p /work/git
+              cd /work/git
+              if [ ! -d "homelab/.git" ]; then
+                git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
+              fi
           volumeMounts:
             - name: workspace
               mountPath: /work
+
       containers:
+        # --- The Agent ---
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           env:
@@ -50,38 +48,67 @@ spec:
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: ZEROCLAW_WORKSPACE
-              value: "/work/homelab"
+              value: "/work/git/homelab/apps/management/zeroclaw"
+            - name: HOME
+              value: "/work"
           command: ["/bin/bash", "-c"]
           args:
             - |
-              # Only onboard if config doesn't exist
-              if [ ! -f "/work/homelab/config.toml" ]; then
+              mkdir -p ~/.zeroclaw
+
+              if [ ! -f "/work/config.toml" ]; then
                 zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-                sed -i '/\[gateway\]/,$d' /work/homelab/config.toml
-                cat <<EOF >> /work/homelab/config.toml
+                sed -i '/\[gateway\]/,$d' /work/config.toml
+                cat <<EOF >> /work/config.toml
               [gateway]
               host = "0.0.0.0"
               port = 18789
               allow_public_bind = true
+
+              [workspace]
+              identity_path = "/work/git/homelab/apps/management/zeroclaw/core/IDENTITY.md"
+              soul_path = "/work/git/homelab/apps/management/zeroclaw/core/SOUL.md"
+              policies_path = "/work/git/homelab/apps/management/zeroclaw/core/POLICIES.md"
+              user_path = "/work/git/homelab/apps/management/zeroclaw/core/USER.md"
+
+              [skills]
+              # The agent will scan every sub-folder in this directory
+              paths = ["/work/git/homelab/apps/management/zeroclaw/skills"]
               EOF
               fi
 
-              # Start daemon in background
-              zeroclaw daemon > /tmp/agent.log 2>&1 &
+              zeroclaw daemon > /work/agent.log 2>&1 &
 
-              # If not paired yet, do it
-              sleep 5
-              if grep -q "one-time code" /tmp/agent.log; then
-                CODE=$(grep -A 2 "one-time code" /tmp/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $CODE"
+              sleep 10
+              if grep -q "one-time code" /work/agent.log; then
+                CODE=$(grep -A 2 "one-time code" /work/agent.log | tail -n 1 | grep -o '[0-9]\{6\}')
+                curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: \$CODE"
               fi
-
-              tail -f /tmp/agent.log
+              tail -f /work/agent.log
           volumeMounts:
             - name: workspace
               mountPath: /work
           ports:
             - containerPort: 18789
+
+        # --- The Sync Sidecar ---
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.2.3
+          args:
+            - --repo=https://github.com/mvg-labs/homelab.git
+            - --branch=main
+            - --wait=60
+            - --root=/work/git
+            - --link=homelab
+          env:
+            - name: GIT_SYNC_USERNAME
+              value: "git"
+            - name: GIT_SYNC_PASSWORD
+              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: github_token } }
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+
       volumes:
         - name: workspace
           persistentVolumeClaim:
