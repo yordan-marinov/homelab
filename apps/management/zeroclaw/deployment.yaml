@@ -28,23 +28,34 @@ spec:
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           imagePullPolicy: Always
           env:
-            # --- FORCE THE BRAIN (Environment Variables override Config) ---
-            - name: ZEROCLAW_LLM_PROVIDER
+            # --- THE MAGIC FIX: DOUBLE UNDERSCORES ---
+            # These override the [gateway] section in config.toml
+            - name: ZEROCLAW_GATEWAY__HOST
+              value: "0.0.0.0"
+            - name: ZEROCLAW_GATEWAY__PORT
+              value: "18789"
+            - name: ZEROCLAW_GATEWAY__ALLOW_PUBLIC_BIND
+              value: "true"
+            - name: ZEROCLAW_GATEWAY__PAIRING_ENABLED
+              value: "false"
+
+            # These override the [llm] section (Fixes the OpenRouter error)
+            - name: ZEROCLAW_LLM__PROVIDER
               value: "openai"
-            - name: ZEROCLAW_LLM_MODEL
+            - name: ZEROCLAW_LLM__MODEL
               value: "homecrew-sre-brain"
-            - name: ZEROCLAW_LLM_BASE_URL
+            - name: ZEROCLAW_LLM__BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-            - name: ZEROCLAW_LLM_API_KEY
+            - name: ZEROCLAW_LLM__API_KEY
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
 
-            # --- FORCE THE BODY ---
-            - name: ZEROCLAW_GATEWAY_HOST
-              value: "0.0.0.0"
-            - name: ZEROCLAW_GATEWAY_PORT
-              value: "18789"
-            - name: ZEROCLAW_GATEWAY_ALLOW_PUBLIC_BIND
-              value: "true"
+            # These override the [workspace] section
+            - name: ZEROCLAW_WORKSPACE__BASE_PATH
+              value: "/work/repo/homelab/apps/management/zeroclaw"
+            - name: ZEROCLAW_WORKSPACE__IDENTITY_PATH
+              value: "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
+            - name: ZEROCLAW_WORKSPACE__SOUL_PATH
+              value: "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
 
             - name: HOME
               value: "/work"
@@ -56,45 +67,27 @@ spec:
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Initializing ZeroClaw..."
-              # Onboard creates the DB and hidden folders
+              echo "[1/2] Initializing Workspace..."
+              # Onboard is still needed once to create the internal SQLite database
+              # We use --force to ensure it doesn't hang on prompts
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Writing Master Config..."
-              cat <<EOF > /work/.zeroclaw/config.toml
-              [gateway]
-              host = "0.0.0.0"
-              port = 18789
-              allow_public_bind = true
-              pairing_enabled = true
-
-              [workspace]
-              base_path = "/work/repo/homelab/apps/management/zeroclaw"
-              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
-              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
-              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
-              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
-
-              [skills]
-              paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
-              EOF
-
-              echo "[3/3] Starting Daemon & Checking Pairing Status..."
-              # Start daemon and capture logs
+              echo "[2/2] Starting ZeroClaw SRE Daemon..."
+              # The Double-Underscore Env Vars will now force the daemon to 0.0.0.0:18789
+              # and use your LiteLLM brain.
               zeroclaw daemon > /work/daemon.log 2>&1 &
 
-              # Self-pairing logic (Uses $$ for shell escaping)
+              # Self-Pairing logic (only runs if pairing is required)
               sleep 15
               if grep -q "one-time code" /work/daemon.log; then
                 CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                echo "[!] Pairing detected. Code: $$CODE"
+                echo "[!] Pairing Code detected: $$CODE"
                 RESPONSE=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
                 TOKEN=$$(echo $$RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-                echo "--------------------------------------------------"
-                echo "PERMANENT SRE TOKEN: $$TOKEN"
-                echo "--------------------------------------------------"
-              else
-                echo "[✓] Agent already paired."
+                echo "--------------------------------------------------------"
+                echo "SUCCESS! YOUR PERMANENT SRE TOKEN IS:"
+                echo "$$TOKEN"
+                echo "--------------------------------------------------------"
               fi
 
               tail -f /work/daemon.log
