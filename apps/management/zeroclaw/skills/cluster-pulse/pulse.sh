@@ -1,4 +1,9 @@
 #!/bin/bash
+echo "--- SRE LIVE REPORT ---"
+echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Node Name: $(hostname)"
+echo "-----------------------"
+
 echo "=== NODE STATUS ==="
 kubectl get nodes -o custom-columns=NAME:.metadata.name,STATUS:.status.conditions[?(@.type==\"Ready\")].status
 
