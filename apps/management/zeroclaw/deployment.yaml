@@ -15,8 +15,6 @@ spec:
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
-
-      # Global security context for the whole pod
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -25,7 +23,6 @@ spec:
       initContainers:
         - name: repo-provisioner
           image: alpine/git
-          # --- FIX: Ensure init container runs as user 1000 ---
           securityContext:
             runAsUser: 1000
           env:
@@ -69,11 +66,9 @@ spec:
           args:
             - |
               mkdir -p /work/.zeroclaw
-
               if [ ! -f "$ZEROCLAW_CONFIG_PATH" ]; then
                 echo "[BOOTSTRAP] Initializing Permanent SRE Identity..."
                 zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-
                 sed -i '/\[gateway\]/,$d' "$ZEROCLAW_CONFIG_PATH"
                 cat <<EOF >> "$ZEROCLAW_CONFIG_PATH"
               [gateway]
