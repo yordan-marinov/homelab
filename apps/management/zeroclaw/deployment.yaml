@@ -40,43 +40,35 @@ spec:
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+
             - name: HOME
               value: "/work"
-            - name: ZEROCLAW_CONFIG_PATH
-              value: "/work/config.toml"
-            - name: ZEROCLAW_STATIC_TOKEN
+            - name: ZEROCLAW_WORKSPACE
+              value: "/work/repo/homelab/apps/management/zeroclaw"
+
+            - name: ZEROCLAW_GATEWAY_HOST
+              value: "0.0.0.0"
+            - name: ZEROCLAW_GATEWAY_PORT
+              value: "18789"
+            - name: ZEROCLAW_GATEWAY_ALLOW_PUBLIC_BIND
+              value: "true"
+            - name: ZEROCLAW_GATEWAY_PAIRING_ENABLED
+              value: "false"
+            - name: ZEROCLAW_API_TOKEN
               value: "mvg-labs-sre-static-token-unique-2024"
+
           command: ["/bin/bash", "-c"]
           args:
             - |
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Onboarding..."
+              echo "[1/2] Initializing SRE Identity..."
+              # Onboard creates the DB and base workspace files
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Applying K8s-Specific Overrides..."
-              sed -i '/\[gateway\]/,$d' /work/config.toml
-
-              cat <<EOF >> /work/config.toml
-              [gateway]
-              host = "0.0.0.0"
-              port = 18789
-              allow_public_bind = true
-              api_token = "$ZEROCLAW_STATIC_TOKEN"
-              pairing_enabled = false
-
-              [workspace]
-              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
-              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
-              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
-              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
-
-              [skills]
-              paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
-              EOF
-
-              echo "[3/3] Starting Daemon..."
+              echo "[2/2] Starting ZeroClaw SRE Daemon..."
+              # The environment variables above will override the config.toml settings automatically
               exec zeroclaw daemon
           volumeMounts:
             - name: workspace
@@ -94,7 +86,6 @@ spec:
             - --wait=60
             - --root=/work/repo
             - --link=homelab
-            - --one-time=false
           env:
             - name: GIT_SYNC_PASSWORD
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: github_token } }
