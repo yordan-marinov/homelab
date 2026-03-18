@@ -22,7 +22,6 @@ spec:
         fsGroup: 1000
 
       initContainers:
-        # 1. FIX PERMISSIONS
         - name: volume-permissions-fixer
           image: busybox
           securityContext:
@@ -44,23 +43,22 @@ spec:
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: HOME
               value: "/work"
-            - name: ZEROCLAW_CONFIG_PATH
-              value: "/work/config.toml"
             - name: SRE_STATIC_TOKEN
               value: "mvg-labs-sre-static-token-unique-2024"
           command: ["/bin/bash", "-c"]
           args:
             - |
               set -e
+              # Ensure the internal directory exists
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Initializing Workspace (onboard)..."
-              # Run onboard to create DB/Folders, but ignore its config
+              echo "[1/3] Initializing ZeroClaw..."
+              # Onboard to create the database
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Overwriting Config with Master K8s Template..."
-              # WE OVERWRITE THE ENTIRE FILE. NO MORE DUPLICATE KEYS.
-              cat <<EOF > /work/config.toml
+              echo "[2/3] Writing Master Config to /work/.zeroclaw/config.toml..."
+              # WE WRITE TO THE EXACT PATH THE LOG REPORTED
+              cat <<EOF > /work/.zeroclaw/config.toml
               [gateway]
               host = "0.0.0.0"
               port = 18789
@@ -75,17 +73,20 @@ spec:
               base_url = "$OPENAI_API_BASE"
 
               [workspace]
+              # Force the agent to use our Git repo as its workspace
+              base_path = "/work/repo/homelab/apps/management/zeroclaw"
               identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
               soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
               policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
               user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
 
               [skills]
+              # Point to our dynamic Git-Sync skills folder
               paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
               EOF
 
               echo "[3/3] Starting ZeroClaw SRE Daemon..."
-              # Explicitly load our clean config
+              # ZeroClaw will now pick up /work/.zeroclaw/config.toml by default
               exec zeroclaw daemon
           volumeMounts:
             - name: workspace
