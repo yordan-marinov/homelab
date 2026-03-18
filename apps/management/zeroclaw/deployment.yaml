@@ -17,86 +17,46 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+
       initContainers:
         - name: volume-permissions-fixer
           image: busybox
           securityContext: { runAsUser: 0 }
           command: ["sh", "-c", "chown -R 1000:1000 /work && chmod -R 775 /work"]
           volumeMounts: [{ name: workspace, mountPath: /work }]
+
       containers:
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
-          imagePullPolicy: Always
           env:
-            - name: OPENAI_API_KEY
-              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
-            - name: OPENAI_API_BASE
-              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: HOME
               value: "/work"
-            - name: SRE_STATIC_TOKEN
-              value: "mvg-labs-sre-static-token-unique-2024"
+            # FORCE the binary to use our ConfigMap file
+            - name: ZEROCLAW_CONFIG_PATH
+              value: "/etc/zeroclaw/config.toml"
+            # Overwrite the 'placeholder' in config.toml with the real key
+            - name: ZEROCLAW_LLM_API_KEY
+              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
           command: ["/bin/bash", "-c"]
           args:
             - |
-              set -e
-              mkdir -p /work/.zeroclaw
+              echo "[1/2] Initializing Database..."
+              # Onboard only to set up the SQLite DB, it won't overwrite our mounted config
+              zeroclaw onboard --api-key $ZEROCLAW_LLM_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[1/4] Initializing ZeroClaw..."
-              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
-
-              echo "[2/4] Writing Master Config..."
-              cat <<EOF > /work/.zeroclaw/config.toml
-              [gateway]
-              host = "0.0.0.0"
-              port = 18789
-              allow_public_bind = true
-              api_token = "$SRE_STATIC_TOKEN"
-              pairing_enabled = false
-              [llm]
-              provider = "openai"
-              model = "homecrew-sre-brain"
-              api_key = "$OPENAI_API_KEY"
-              base_url = "$OPENAI_API_BASE"
-              [workspace]
-              base_path = "/work/repo/homelab/apps/management/zeroclaw"
-              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
-              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
-              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
-              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
-              [skills]
-              paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
-              EOF
-
-              echo "[3/4] Starting Daemon & Checking Pairing Status..."
-              zeroclaw daemon > /work/daemon.log 2>&1 &
-
-              sleep 15
-              # Use $$ to escape variables for the container shell
-              if grep -q "one-time code" /work/daemon.log; then
-                CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                echo "[!] Action Required: Pairing detected. Code: $$CODE"
-                PAIR_RES=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
-                echo "[✓] Self-Pairing Result: $$PAIR_RES"
-
-                # Extract the token correctly
-                FINAL_TOKEN=$$(echo $$PAIR_RES | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-                echo "--------------------------------------------------"
-                echo "CRITICAL: YOUR PERMANENT SRE TOKEN IS:"
-                echo "$$FINAL_TOKEN"
-                echo "--------------------------------------------------"
-              else
-                echo "[✓] Agent already paired (Session loaded from PVC)."
-              fi
-
-              echo "[4/4] SRE Agent is Online. Streaming logs..."
-              tail -f /work/daemon.log
-          volumeMounts: [{ name: workspace, mountPath: /work }]
-          ports: [{ containerPort: 18789 }]
+              echo "[2/2] Starting ZeroClaw Daemon..."
+              exec zeroclaw daemon
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+            - name: config-volume
+              mountPath: /etc/zeroclaw
+              readOnly: true
+          ports:
+            - containerPort: 18789
 
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
-          securityContext: { runAsUser: 1000 }
           args:
             - --repo=https://github.com/mvg-labs/homelab.git
             - --branch=main
@@ -113,3 +73,6 @@ spec:
       volumes:
         - name: workspace
           persistentVolumeClaim: { claimName: zeroclaw-workspace-pvc }
+        - name: config-volume
+          configMap:
+            name: zeroclaw-config
