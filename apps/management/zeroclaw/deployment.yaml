@@ -18,14 +18,12 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       initContainers:
-        # 1. FIX PERMISSIONS (Ensures user 1000 can write to PVC)
         - name: volume-permissions-fixer
           image: busybox
           securityContext: { runAsUser: 0 }
           command: ["sh", "-c", "chown -R 1000:1000 /work && chmod -R 775 /work"]
           volumeMounts: [{ name: workspace, mountPath: /work }]
       containers:
-        # --- THE SRE AGENT ---
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           imagePullPolicy: Always
@@ -36,50 +34,71 @@ spec:
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: HOME
               value: "/work"
-            # Force safety flags via environment as well
-            - name: ZEROCLAW_ALLOW_PUBLIC_BIND
-              value: "true"
-            - name: ZEROCLAW_GATEWAY_ALLOW_PUBLIC_BIND
-              value: "true"
           command: ["/bin/bash", "-c"]
           args:
             - |
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Initializing ZeroClaw..."
-              # Onboard creates the config exactly how the binary likes it
+              echo "[1/4] Initializing ZeroClaw (onboard)..."
+              # We run onboard just to ensure the internal DB and folders exist.
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Surgically Patching config.toml..."
-              # 1. Change Host to 0.0.0.0
-              sed -i 's/127.0.0.1/0.0.0.0/g' /work/.zeroclaw/config.toml
-              # 2. Change Port to 18789
-              sed -i 's/42617/18789/g' /work/.zeroclaw/config.toml
-              sed -i 's/8080/18789/g' /work/.zeroclaw/config.toml
-              # 3. Insert the Safety Flag right under the [gateway] header
-              sed -i '/\[gateway\]/a allow_public_bind = true' /work/.zeroclaw/config.toml
+              echo "[2/4] Overwriting Config with Perfect Template..."
+              # WE USE SINGLE '>' TO DELETE THE MESSY CONFIG AND WRITE A CLEAN ONE
+              cat <<EOF > /work/.zeroclaw/config.toml
+              [gateway]
+              host = "0.0.0.0"
+              port = 18789
+              allow_public_bind = true
+              pairing_enabled = true
 
-              # 4. Point to your Git-Sync Workspace
-              sed -i "s|base_path = .*|base_path = \"/work/repo/homelab/apps/management/zeroclaw\"|" /work/.zeroclaw/config.toml
+              [llm]
+              provider = "openai"
+              model = "homecrew-sre-brain"
+              api_key = "$OPENAI_API_KEY"
+              base_url = "$OPENAI_API_BASE"
 
-              echo "[3/3] Starting Daemon..."
-              # Start daemon and capture logs
+              [workspace]
+              # Pointing to the Git-Sync managed directories
+              base_path = "/work/repo/homelab/apps/management/zeroclaw"
+              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
+              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
+              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
+              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
+
+              [skills]
+              paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
+              EOF
+
+              echo "[3/4] Starting Daemon & Self-Pairing..."
+              # Start daemon in background
               zeroclaw daemon > /work/daemon.log 2>&1 &
 
-              # Small sleep to allow self-pairing if the PVC was wiped,
-              # otherwise it just tails the logs.
-              sleep 10
+              sleep 15
+              # Check if a pairing code is needed (usually only on fresh PVC)
               if grep -q "one-time code" /work/daemon.log; then
                 CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE"
+                if [ ! -z "$$CODE" ]; then
+                  echo "[✓] Pairing Code found: $$CODE. Sending pairing request..."
+                  RESPONSE=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
+
+                  # Extract the token and print it clearly
+                  TOKEN=$$(echo $$RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+                  echo "--------------------------------------------------------"
+                  echo "SUCCESS! YOUR PERMANENT SRE TOKEN IS:"
+                  echo "$$TOKEN"
+                  echo "--------------------------------------------------------"
+                fi
+              else
+                echo "[✓] Agent already paired. Using existing session from PVC."
               fi
 
+              echo "[4/4] SRE Agent is Online. Streaming logs..."
               tail -f /work/daemon.log
           volumeMounts: [{ name: workspace, mountPath: /work }]
           ports: [{ containerPort: 18789 }]
 
-        # --- THE SYNC SIDECAR ---
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
           securityContext: { runAsUser: 1000 }
