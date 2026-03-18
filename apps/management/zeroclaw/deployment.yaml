@@ -13,21 +13,17 @@ spec:
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
-
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-
       initContainers:
         - name: volume-permissions-fixer
           image: busybox
           securityContext: { runAsUser: 0 }
           command: ["sh", "-c", "chown -R 1000:1000 /work && chmod -R 775 /work"]
           volumeMounts: [{ name: workspace, mountPath: /work }]
-
       containers:
-        # --- THE SRE AGENT ---
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           imagePullPolicy: Always
@@ -57,43 +53,37 @@ spec:
               allow_public_bind = true
               api_token = "$SRE_STATIC_TOKEN"
               pairing_enabled = false
-
               [llm]
               provider = "openai"
               model = "homecrew-sre-brain"
               api_key = "$OPENAI_API_KEY"
               base_url = "$OPENAI_API_BASE"
-
               [workspace]
               base_path = "/work/repo/homelab/apps/management/zeroclaw"
               identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
               soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
               policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
               user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
-
               [skills]
               paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
               EOF
 
-              # 3. SELF-PAIRING LOGIC
-              # We start the daemon in the background to capture the code
               echo "[3/4] Starting Daemon & Checking Pairing Status..."
               zeroclaw daemon > /work/daemon.log 2>&1 &
 
-              # Wait for the code to appear (only if not already paired)
-              sleep 5
+              sleep 15
+              # Use $$ to escape variables for the container shell
               if grep -q "one-time code" /work/daemon.log; then
-                CODE=$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                echo "[!] Action Required: Pairing detected. Code: \$CODE"
-                # Automate the pairing via local API
-                PAIR_RES=$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: \$CODE")
-                echo "[✓] Self-Pairing Result: \$PAIR_RES"
+                CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
+                echo "[!] Action Required: Pairing detected. Code: $$CODE"
+                PAIR_RES=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
+                echo "[✓] Self-Pairing Result: $$PAIR_RES"
 
-                # Extract the real session token from the pairing result
-                FINAL_TOKEN=$(echo \$PAIR_RES | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+                # Extract the token correctly
+                FINAL_TOKEN=$$(echo $$PAIR_RES | grep -o '"token":"[^"]*' | cut -d'"' -f4)
                 echo "--------------------------------------------------"
                 echo "CRITICAL: YOUR PERMANENT SRE TOKEN IS:"
-                echo "\$FINAL_TOKEN"
+                echo "$$FINAL_TOKEN"
                 echo "--------------------------------------------------"
               else
                 echo "[✓] Agent already paired (Session loaded from PVC)."
