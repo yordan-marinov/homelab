@@ -28,10 +28,22 @@ spec:
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           imagePullPolicy: Always
           env:
+            # --- THE BRAIN (LiteLLM) ---
             - name: OPENAI_API_KEY
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
             - name: OPENAI_API_BASE
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+
+            # --- FORCE ZERO CLAW TO USE OPENAI PROVIDER (LITELLM) ---
+            - name: ZEROCLAW_LLM_PROVIDER
+              value: "openai"
+            - name: ZEROCLAW_LLM_MODEL
+              value: "homecrew-sre-brain"
+            - name: ZEROCLAW_LLM_BASE_URL
+              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+            - name: ZEROCLAW_LLM_API_KEY
+              valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
+
             - name: HOME
               value: "/work"
           command: ["/bin/bash", "-c"]
@@ -40,12 +52,16 @@ spec:
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/4] Initializing ZeroClaw (onboard)..."
-              # We run onboard just to ensure the internal DB and folders exist.
-              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+              echo "[1/3] Initializing ZeroClaw with LiteLLM..."
+              # Added --base-url to ensure the initial profile is correct
+              zeroclaw onboard \
+                --api-key $OPENAI_API_KEY \
+                --provider openai \
+                --model "homecrew-sre-brain" \
+                --base-url "http://litellm-service.ai-core.svc.cluster.local:4000/v1" \
+                --force
 
-              echo "[2/4] Overwriting Config with Perfect Template..."
-              # WE USE SINGLE '>' TO DELETE THE MESSY CONFIG AND WRITE A CLEAN ONE
+              echo "[2/3] Writing Master Config..."
               cat <<EOF > /work/.zeroclaw/config.toml
               [gateway]
               host = "0.0.0.0"
@@ -57,10 +73,9 @@ spec:
               provider = "openai"
               model = "homecrew-sre-brain"
               api_key = "$OPENAI_API_KEY"
-              base_url = "$OPENAI_API_BASE"
+              base_url = "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
 
               [workspace]
-              # Pointing to the Git-Sync managed directories
               base_path = "/work/repo/homelab/apps/management/zeroclaw"
               identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
               soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
@@ -71,30 +86,22 @@ spec:
               paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
               EOF
 
-              echo "[3/4] Starting Daemon & Self-Pairing..."
-              # Start daemon in background
+              echo "[3/3] Starting Daemon & Checking Pairing..."
               zeroclaw daemon > /work/daemon.log 2>&1 &
 
               sleep 15
-              # Check if a pairing code is needed (usually only on fresh PVC)
               if grep -q "one-time code" /work/daemon.log; then
                 CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-                if [ ! -z "$$CODE" ]; then
-                  echo "[✓] Pairing Code found: $$CODE. Sending pairing request..."
-                  RESPONSE=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
-
-                  # Extract the token and print it clearly
-                  TOKEN=$$(echo $$RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-                  echo "--------------------------------------------------------"
-                  echo "SUCCESS! YOUR PERMANENT SRE TOKEN IS:"
-                  echo "$$TOKEN"
-                  echo "--------------------------------------------------------"
-                fi
+                echo "[!] Pairing Code: $$CODE"
+                RESPONSE=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
+                TOKEN=$$(echo $$RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+                echo "--------------------------------------------------"
+                echo "NEW TOKEN: $$TOKEN"
+                echo "--------------------------------------------------"
               else
-                echo "[✓] Agent already paired. Using existing session from PVC."
+                echo "[✓] Agent already paired."
               fi
 
-              echo "[4/4] SRE Agent is Online. Streaming logs..."
               tail -f /work/daemon.log
           volumeMounts: [{ name: workspace, mountPath: /work }]
           ports: [{ containerPort: 18789 }]
