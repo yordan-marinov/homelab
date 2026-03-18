@@ -31,27 +31,34 @@ spec:
           env:
             - name: HOME
               value: "/work"
-            # FORCE the binary to use our ConfigMap file
-            - name: ZEROCLAW_CONFIG_PATH
-              value: "/etc/zeroclaw/config.toml"
-            # Overwrite the 'placeholder' in config.toml with the real key
-            - name: ZEROCLAW_LLM_API_KEY
+            - name: OPENAI_API_KEY
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: virtual_key } }
           command: ["/bin/bash", "-c"]
           args:
             - |
-              echo "[1/2] Initializing Database..."
-              # Onboard only to set up the SQLite DB, it won't overwrite our mounted config
-              zeroclaw onboard --api-key $ZEROCLAW_LLM_API_KEY --provider openai --model "homecrew-sre-brain" --force
+              set -e
+              # 1. Ensure the directory exists
+              mkdir -p /work/.zeroclaw
 
-              echo "[2/2] Starting ZeroClaw Daemon..."
+              echo "[1/3] Initializing DB (onboard)..."
+              # We run onboard with a dummy key just to initialize the SQLite DB and folders
+              zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+
+              echo "[2/3] BRUTE FORCE: Overwriting /work/.zeroclaw/config.toml with ConfigMap..."
+              # We copy our perfect config from the read-only mount to the active path
+              cp /tmp/config-source/config.toml /work/.zeroclaw/config.toml
+
+              # Inject the real API key into the file we just copied
+              sed -i "s|api_key = .*|api_key = \"$OPENAI_API_KEY\"|" /work/.zeroclaw/config.toml
+
+              echo "[3/3] Starting ZeroClaw Daemon..."
+              # This will now load /work/.zeroclaw/config.toml and see source="file"
               exec zeroclaw daemon
           volumeMounts:
             - name: workspace
               mountPath: /work
-            - name: config-volume
-              mountPath: /etc/zeroclaw
-              readOnly: true
+            - name: config-source
+              mountPath: /tmp/config-source
           ports:
             - containerPort: 18789
 
@@ -73,6 +80,6 @@ spec:
       volumes:
         - name: workspace
           persistentVolumeClaim: { claimName: zeroclaw-workspace-pvc }
-        - name: config-volume
+        - name: config-source
           configMap:
             name: zeroclaw-config

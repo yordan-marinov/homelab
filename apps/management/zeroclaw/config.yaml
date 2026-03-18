@@ -15,8 +15,6 @@ data:
     [llm]
     provider = "openai"
     model = "homecrew-sre-brain"
-    # These will be overridden by Env Vars for security
-    api_key = "placeholder"
     base_url = "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
 
     [workspace]
