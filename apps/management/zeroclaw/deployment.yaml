@@ -22,6 +22,7 @@ spec:
         fsGroup: 1000
 
       initContainers:
+        # 1. FIX PERMISSIONS
         - name: volume-permissions-fixer
           image: busybox
           securityContext:
@@ -32,6 +33,7 @@ spec:
               mountPath: /work
 
       containers:
+        # --- THE SRE AGENT ---
         - name: agent
           image: ghcr.io/mvg-labs/zeroclaw-sre:latest
           imagePullPolicy: Always
@@ -44,8 +46,6 @@ spec:
               value: "/work"
             - name: ZEROCLAW_CONFIG_PATH
               value: "/work/config.toml"
-            - name: ZEROCLAW_WORKSPACE
-              value: "/work/repo/homelab/apps/management/zeroclaw"
             - name: SRE_STATIC_TOKEN
               value: "mvg-labs-sre-static-token-unique-2024"
           command: ["/bin/bash", "-c"]
@@ -54,28 +54,38 @@ spec:
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Onboarding Agent..."
+              echo "[1/3] Initializing Workspace (onboard)..."
+              # Run onboard to create DB/Folders, but ignore its config
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Surgically Patching config.toml..."
-              sed -i 's/host = "127.0.0.1"/host = "0.0.0.0"/' /work/config.toml
-              sed -i 's/port = 42617/port = 18789/' /work/config.toml
+              echo "[2/3] Overwriting Config with Master K8s Template..."
+              # WE OVERWRITE THE ENTIRE FILE. NO MORE DUPLICATE KEYS.
+              cat <<EOF > /work/config.toml
+              [gateway]
+              host = "0.0.0.0"
+              port = 18789
+              allow_public_bind = true
+              api_token = "$SRE_STATIC_TOKEN"
+              pairing_enabled = false
 
-              sed -i '/\[gateway\]/a allow_public_bind = true' /work/config.toml
-              sed -i "/\[gateway\]/a api_token = \"$SRE_STATIC_TOKEN\"" /work/config.toml
-              sed -i '/\[gateway\]/a pairing_enabled = false' /work/config.toml
+              [llm]
+              provider = "openai"
+              model = "homecrew-sre-brain"
+              api_key = "$OPENAI_API_KEY"
+              base_url = "$OPENAI_API_BASE"
 
-              sed -i "s|identity_path = .*|identity_path = \"/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md\"|" /work/config.toml
-              sed -i "s|soul_path = .*|soul_path = \"/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md\"|" /work/config.toml
+              [workspace]
+              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
+              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
+              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
+              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
 
-              if ! grep -q "skills" /work/config.toml; then
-                cat <<EOF >> /work/config.toml
               [skills]
               paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
               EOF
-              fi
 
               echo "[3/3] Starting ZeroClaw SRE Daemon..."
+              # Explicitly load our clean config
               exec zeroclaw daemon
           volumeMounts:
             - name: workspace
@@ -83,6 +93,7 @@ spec:
           ports:
             - containerPort: 18789
 
+        # --- THE SYNC SIDECAR ---
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
           securityContext:
