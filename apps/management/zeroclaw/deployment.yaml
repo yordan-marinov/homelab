@@ -40,38 +40,50 @@ spec:
               set -e
               mkdir -p /work/.zeroclaw
 
-              echo "[1/4] Initializing ZeroClaw..."
-              # Onboard creates the initial SQLite DB and workspace
+              echo "[1/4] Initializing ZeroClaw Workspace..."
+              # Onboard creates the DB and hidden folders
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/4] Patching Networking (0.0.0.0)..."
-              # We only patch what we know works: the host and public bind
-              sed -i 's/127.0.0.1/0.0.0.0/g' /work/.zeroclaw/config.toml
-              if ! grep -q "allow_public_bind" /work/.zeroclaw/config.toml; then
-                sed -i '/\[gateway\]/a allow_public_bind = true' /work/.zeroclaw/config.toml
-              fi
-              sed -i 's/port = 42617/port = 18789/' /work/.zeroclaw/config.toml
+              echo "[2/4] Overwriting Config with K8s Master Template..."
+              # WE OVERWRITE THE FILE TO ENSURE NO DUPLICATES AND CORRECT SYNTAX
+              cat <<EOF > /work/.zeroclaw/config.toml
+              [gateway]
+              host = "0.0.0.0"
+              port = 18789
+              allow_public_bind = true
+              pairing_enabled = true
 
-              echo "[3/4] Starting Daemon and Waiting for Pairing Code..."
-              # Start daemon in background and redirect output to a file we can read
+              [llm]
+              provider = "openai"
+              model = "homecrew-sre-brain"
+              api_key = "$OPENAI_API_KEY"
+              base_url = "$OPENAI_API_BASE"
+
+              [workspace]
+              base_path = "/work/repo/homelab/apps/management/zeroclaw"
+              identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
+              soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
+              policies_path = "/work/repo/homelab/apps/management/zeroclaw/core/POLICIES.md"
+              user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
+
+              [skills]
+              paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
+              EOF
+
+              echo "[3/4] Starting Daemon & Performing Self-Pairing..."
+              # Start daemon in background
               zeroclaw daemon > /work/daemon.log 2>&1 &
 
-              # Wait up to 60 seconds for the pairing code to appear
+              # Wait for the pairing code to appear in the new log
               for i in {1..30}; do
                 if grep -q "one-time code" /work/daemon.log; then
-                  # Extract the 6-digit code using a more robust grep
                   CODE=$$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
-
                   if [ ! -z "$$CODE" ]; then
                     echo "[✓] Found Pairing Code: $$CODE"
-                    echo "[✓] Attempting Self-Pairing..."
-
-                    # Perform the pairing request
+                    # Pair the agent to itself
                     RESPONSE=$$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: $$CODE")
+                    echo "[✓] Pairing Result: $$RESPONSE"
 
-                    echo "[✓] Pairing Response: $$RESPONSE"
-
-                    # Extract the session token
                     TOKEN=$$(echo $$RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
                     echo "--------------------------------------------------------"
                     echo "SUCCESS! YOUR PERMANENT SRE TOKEN IS:"
@@ -80,11 +92,11 @@ spec:
                     break
                   fi
                 fi
-                echo "Waiting for code... ($$i/30)"
+                echo "Waiting for daemon to bind to 0.0.0.0... ($$i/30)"
                 sleep 2
               done
 
-              echo "[4/4] SRE Agent is Online. Tailing logs..."
+              echo "[4/4] SRE Agent is Online. Streaming logs..."
               tail -f /work/daemon.log
           volumeMounts: [{ name: workspace, mountPath: /work }]
           ports: [{ containerPort: 18789 }]
