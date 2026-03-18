@@ -15,12 +15,24 @@ spec:
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
+
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
 
       initContainers:
+        # --- 1. PERMISSIONS FIXER (Runs as root) ---
+        - name: volume-permissions-fixer
+          image: busybox
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "chown -R 1000:1000 /work && chmod -R 775 /work"]
+          volumeMounts:
+            - name: workspace
+              mountPath: /work
+
+        # --- 2. REPO PROVISIONER (Runs as 1000) ---
         - name: repo-provisioner
           image: alpine/git
           securityContext:
@@ -34,12 +46,19 @@ spec:
               set -e
               mkdir -p /work/git
               cd /work/git
-              # Check if repo exists, if not clone it. If it does, do nothing (git-sync will handle it).
+
+              # If directory exists but isn't a git repo, clean it
+              if [ -d "homelab" ] && [ ! -d "homelab/.git" ]; then
+                echo "Cleaning up incomplete clone..."
+                rm -rf homelab
+              fi
+
+              # Clone if missing
               if [ ! -d "homelab/.git" ]; then
                 echo "Cloning homelab repo..."
-                git clone https://$(GITHUB_TOKEN)@github.com/mvg-labs/homelab.git homelab
+                git clone https://${GITHUB_TOKEN}@github.com/mvg-labs/homelab.git homelab
               else
-                echo "Repo already exists on PVC, skipping clone."
+                echo "Repo already exists, skipping."
               fi
           volumeMounts:
             - name: workspace
@@ -65,10 +84,11 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              mkdir -p /work/.zeroclaw
+              # Ensure config exists on PVC
               if [ ! -f "$ZEROCLAW_CONFIG_PATH" ]; then
-                echo "[BOOTSTRAP] Initializing Permanent SRE Identity..."
+                echo "[BOOTSTRAP] Initializing Config..."
                 zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
+
                 sed -i '/\[gateway\]/,$d' "$ZEROCLAW_CONFIG_PATH"
                 cat <<EOF >> "$ZEROCLAW_CONFIG_PATH"
               [gateway]
@@ -89,7 +109,7 @@ spec:
               EOF
               fi
 
-              echo "[BOOTSTRAP] SRE Agent Starting with Static Auth..."
+              echo "[BOOTSTRAP] SRE Agent Starting..."
               exec zeroclaw daemon
           volumeMounts:
             - name: workspace
