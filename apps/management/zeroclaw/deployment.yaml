@@ -6,12 +6,10 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: zeroclaw-sre
+    matchLabels: { app: zeroclaw-sre }
   template:
     metadata:
-      labels:
-        app: zeroclaw-sre
+      labels: { app: zeroclaw-sre }
     spec:
       serviceAccountName: zeroclaw-sre-sa
       imagePullSecrets: [{ name: zeroclaw-ghcr-pull-secret }]
@@ -24,12 +22,9 @@ spec:
       initContainers:
         - name: volume-permissions-fixer
           image: busybox
-          securityContext:
-            runAsUser: 0
+          securityContext: { runAsUser: 0 }
           command: ["sh", "-c", "chown -R 1000:1000 /work && chmod -R 775 /work"]
-          volumeMounts:
-            - name: workspace
-              mountPath: /work
+          volumeMounts: [{ name: workspace, mountPath: /work }]
 
       containers:
         # --- THE SRE AGENT ---
@@ -49,15 +44,12 @@ spec:
           args:
             - |
               set -e
-              # Ensure the internal directory exists
               mkdir -p /work/.zeroclaw
 
-              echo "[1/3] Initializing ZeroClaw..."
-              # Onboard to create the database
+              echo "[1/4] Initializing ZeroClaw..."
               zeroclaw onboard --api-key $OPENAI_API_KEY --provider openai --model "homecrew-sre-brain" --force
 
-              echo "[2/3] Writing Master Config to /work/.zeroclaw/config.toml..."
-              # WE WRITE TO THE EXACT PATH THE LOG REPORTED
+              echo "[2/4] Writing Master Config..."
               cat <<EOF > /work/.zeroclaw/config.toml
               [gateway]
               host = "0.0.0.0"
@@ -73,7 +65,6 @@ spec:
               base_url = "$OPENAI_API_BASE"
 
               [workspace]
-              # Force the agent to use our Git repo as its workspace
               base_path = "/work/repo/homelab/apps/management/zeroclaw"
               identity_path = "/work/repo/homelab/apps/management/zeroclaw/core/IDENTITY.md"
               soul_path = "/work/repo/homelab/apps/management/zeroclaw/core/SOUL.md"
@@ -81,24 +72,41 @@ spec:
               user_path = "/work/repo/homelab/apps/management/zeroclaw/core/USER.md"
 
               [skills]
-              # Point to our dynamic Git-Sync skills folder
               paths = ["/work/repo/homelab/apps/management/zeroclaw/skills"]
               EOF
 
-              echo "[3/3] Starting ZeroClaw SRE Daemon..."
-              # ZeroClaw will now pick up /work/.zeroclaw/config.toml by default
-              exec zeroclaw daemon
-          volumeMounts:
-            - name: workspace
-              mountPath: /work
-          ports:
-            - containerPort: 18789
+              # 3. SELF-PAIRING LOGIC
+              # We start the daemon in the background to capture the code
+              echo "[3/4] Starting Daemon & Checking Pairing Status..."
+              zeroclaw daemon > /work/daemon.log 2>&1 &
 
-        # --- THE SYNC SIDECAR ---
+              # Wait for the code to appear (only if not already paired)
+              sleep 5
+              if grep -q "one-time code" /work/daemon.log; then
+                CODE=$(grep -A 2 "one-time code" /work/daemon.log | tail -n 1 | grep -o '[0-9]\{6\}')
+                echo "[!] Action Required: Pairing detected. Code: \$CODE"
+                # Automate the pairing via local API
+                PAIR_RES=$(curl -s -X POST http://127.0.0.1:18789/pair -H "X-Pairing-Code: \$CODE")
+                echo "[✓] Self-Pairing Result: \$PAIR_RES"
+
+                # Extract the real session token from the pairing result
+                FINAL_TOKEN=$(echo \$PAIR_RES | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+                echo "--------------------------------------------------"
+                echo "CRITICAL: YOUR PERMANENT SRE TOKEN IS:"
+                echo "\$FINAL_TOKEN"
+                echo "--------------------------------------------------"
+              else
+                echo "[✓] Agent already paired (Session loaded from PVC)."
+              fi
+
+              echo "[4/4] SRE Agent is Online. Streaming logs..."
+              tail -f /work/daemon.log
+          volumeMounts: [{ name: workspace, mountPath: /work }]
+          ports: [{ containerPort: 18789 }]
+
         - name: git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.2.3
-          securityContext:
-            runAsUser: 1000
+          securityContext: { runAsUser: 1000 }
           args:
             - --repo=https://github.com/mvg-labs/homelab.git
             - --branch=main
@@ -110,11 +118,8 @@ spec:
               valueFrom: { secretKeyRef: { name: zeroclaw-app-secrets, key: github_token } }
             - name: GIT_SYNC_USERNAME
               value: "mvg-labs-bot"
-          volumeMounts:
-            - name: workspace
-              mountPath: /work
+          volumeMounts: [{ name: workspace, mountPath: /work }]
 
       volumes:
         - name: workspace
-          persistentVolumeClaim:
-            claimName: zeroclaw-workspace-pvc
+          persistentVolumeClaim: { claimName: zeroclaw-workspace-pvc }
