@@ -12,5 +12,6 @@ endpoints:
     conditions:
       ready: true
 ports:
-  - name: web
+  - name: grafana-port
     port: 3000
+    protocol: TCP

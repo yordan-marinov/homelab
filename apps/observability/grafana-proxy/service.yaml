@@ -5,7 +5,7 @@ metadata:
   namespace: management
 spec:
   ports:
-    - name: web
+    - name: grafana-port
       protocol: TCP
       port: 3000
       targetPort: 3000

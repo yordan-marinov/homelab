@@ -11,6 +11,5 @@ spec:
       services:
         - name: grafana-external-svc
           port: 3000
-          serversTransport: grafana-transport
   tls:
     secretName: grafana-mvgates-tls
