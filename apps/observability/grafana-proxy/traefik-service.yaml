@@ -2,7 +2,7 @@ apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: grafana-external-ts
-  namespace: monitoring
+  namespace: management
 spec:
   loadBalancer:
     servers:
