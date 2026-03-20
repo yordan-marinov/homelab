@@ -1,34 +1,21 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: observability-prometheus-agent
-  namespace: argocd
-spec:
-  project: default
+# This tells the Prometheus chart to run in "Agent" mode
+server:
+  enabled: true
+  replicaCount: 1
 
-  sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: prometheus
-      targetRevision: 25.21.0
-      helm:
-        valueFiles:
-          - $homelab/apps/observability/prometheus-agent/values.yaml
+  remoteWrite:
+    - url: "http://192.168.102.3:9090/api/v1/write"
 
-    - repoURL: https://github.com/mvg-labs/homelab
-      targetRevision: main
-      ref: homelab
+  global:
+    external_labels:
+      cluster: homelab-k8s
 
-    - repoURL: https://github.com/mvg-labs/homelab
-      targetRevision: main
-      path: apps/observability/prometheus-agent
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
 
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+prometheus-node-exporter:
+  enabled: true
+kube-state-metrics:
+  enabled: true
