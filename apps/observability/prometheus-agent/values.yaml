@@ -1,33 +1,41 @@
-mode: agent
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability-prometheus-agent
+  namespace: argocd
 
-replicaCount: 1
+spec:
+  project: default
 
-service:
-  enabled: false
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus
+    targetRevision: 28.14.0
 
-ingress:
-  enabled: false
+    helm:
+      valueFiles:
+        - values.yaml
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus
+      targetRevision: 25.8.0
+      helm:
+        valueFiles:
+          - $values/apps/observability/prometheus-agent/values.yaml
 
-remoteWrite:
-  - url: http://192.168.102.3:9090/api/v1/write
+    - repoURL: https://github.com/<your-username>/homelab
+      targetRevision: main
+      ref: values
 
-prometheusSpec:
-  scrapeInterval: 15s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
 
-additionalScrapeConfigs:
-  - job_name: kubernetes-nodes
-    kubernetes_sd_configs:
-      - role: node
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
 
-  - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-
-  - job_name: kubernetes-services
-    kubernetes_sd_configs:
-      - role: service
+    syncOptions:
+      - CreateNamespace=true
