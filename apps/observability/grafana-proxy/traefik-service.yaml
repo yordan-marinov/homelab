@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: grafana-external-ts
+  namespace: management
+spec:
+  loadBalancer:
+    servers:
+      - url: http://192.168.102.3:3000
