@@ -9,7 +9,8 @@ spec:
     - match: Host(`grafana.mvgates.com`)
       kind: Rule
       services:
-        - name: grafana-external-ts
-          kind: TraefikService
+        - name: grafana-external-svc
+          port: 3000
+          serversTransport: grafana-transport
   tls:
     secretName: grafana-mvgates-tls
