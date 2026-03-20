@@ -3,30 +3,24 @@ kind: Application
 metadata:
   name: observability-prometheus-agent
   namespace: argocd
-
 spec:
   project: default
-
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: prometheus
-    targetRevision: 28.14.0
-
-    helm:
-      valueFiles:
-        - values.yaml
 
   sources:
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: prometheus
-      targetRevision: 25.8.0
+      targetRevision: 25.21.0
       helm:
         valueFiles:
-          - $values/apps/observability/prometheus-agent/values.yaml
+          - $homelab/apps/observability/prometheus-agent/values.yaml
 
-    - repoURL: https://github.com/<your-username>/homelab
+    - repoURL: https://github.com/mvg-labs/homelab
       targetRevision: main
-      ref: values
+      ref: homelab
+
+    - repoURL: https://github.com/mvg-labs/homelab
+      targetRevision: main
+      path: apps/observability/prometheus-agent
 
   destination:
     server: https://kubernetes.default.svc
@@ -36,6 +30,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
-
     syncOptions:
       - CreateNamespace=true
