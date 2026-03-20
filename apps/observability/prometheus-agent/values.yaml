@@ -1,0 +1,33 @@
+mode: agent
+
+replicaCount: 1
+
+service:
+  enabled: false
+
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+remoteWrite:
+  - url: http://192.168.102.3:9090/api/v1/write
+
+prometheusSpec:
+  scrapeInterval: 15s
+
+additionalScrapeConfigs:
+  - job_name: kubernetes-nodes
+    kubernetes_sd_configs:
+      - role: node
+
+  - job_name: kubernetes-pods
+    kubernetes_sd_configs:
+      - role: pod
+
+  - job_name: kubernetes-services
+    kubernetes_sd_configs:
+      - role: service
