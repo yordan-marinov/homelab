@@ -4,5 +4,8 @@ metadata:
   name: grafana-external-svc
   namespace: management
 spec:
-  type: ExternalName
-  externalName: 192.168.102.3
+  ports:
+    - name: web
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
