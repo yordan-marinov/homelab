@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-websecure
+  namespace: monitoring
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`grafana.mvgates.com`)
+      kind: Rule
+      services:
+        - name: grafana-external-svc
+          port: 3000
+          serversTransport: grafana-transport
+  tls:
+    secretName: ai-mvgates-tls
