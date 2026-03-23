@@ -14,7 +14,7 @@ data:
       - url: "http://192.168.102.3:9090/api/v1/write"
 
     scrape_configs:
-      # 1. Scrape the Kubelet for Node metrics (CPU/Mem)
+      # 1. Scrape Node Kubelet (CPU/Mem)
       - job_name: 'kubernetes-nodes'
         scheme: https
         tls_config:
@@ -26,11 +26,16 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
 
-      # 2. Scrape CAdvisor (THIS FIXES YOUR NETWORK I/O CHARTS)
+      # 2. Scrape cAdvisor (Network I/O)
       - job_name: 'kubernetes-cadvisor'
         scheme: https
-        metrics_path: /metrics/cadvisor
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           insecure_skip_verify: true
@@ -40,22 +45,20 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
 
-      # 3. Only scrape pods that want to be scraped
+      # 3. Scrape Pods
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
-          # Only scrape pods with annotation prometheus.io/scrape: true
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
             regex: true
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            target_label: job
