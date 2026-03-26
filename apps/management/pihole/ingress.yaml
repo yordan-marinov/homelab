@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pihole-ui
+  namespace: management
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`pi.mvgates.com`)
+      kind: Rule
+      services:
+        - name: pihole-dns-external
+          port: 80
+  tls:
+    secretName: ai-mvgates-tls
