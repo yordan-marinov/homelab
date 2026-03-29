@@ -7,8 +7,8 @@ data:
   index.html: |
     <html>
     <body style="background-color: #0d1117; color: #58a6ff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
-      <h1>🧠 THE NEURAL LAB</h1>
-      <p>Status: <span style="color: #3fb950;">REGENERATED</span></p>
+      <h1>THE NEURAL LAB</h1>
+    <p>Status: <span style="color: #3fb950;">REGENERATED AND UPATED</span></p>
       <p><i>State synchronized via Zettelkasten DNA</i></p>
     </body>
     </html>
