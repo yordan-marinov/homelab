@@ -8,6 +8,8 @@ spec:
   routes:
     - match: Host(`fitness.mvgates.com`)
       kind: Rule
+      middlewares:
+        - name: fitness-headers
       services:
         - name: wger-service
           port: 8000

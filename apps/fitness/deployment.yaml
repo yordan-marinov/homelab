@@ -33,6 +33,16 @@ spec:
               value: "localhost"
             - name: WGER_PORT
               value: "8000"
+            - name: DJANGO_ALLOWED_HOSTS
+              value: "fitness.mvgates.com,localhost,127.0.0.1"
+            - name: CSRF_TRUSTED_ORIGINS
+              value: "https://fitness.mvgates.com"
+            - name: WGER_SITE_URL
+              value: "https://fitness.mvgates.com"
+            - name: X_FORWARDED_PROTO
+              value: "https"
+            - name: SECURE_PROXY_SSL_HEADER
+              value: "HTTP_X_FORWARDED_PROTO,https"
           ports:
             - containerPort: 8000
           volumeMounts:
