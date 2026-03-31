@@ -14,7 +14,6 @@ spec:
         app: wger
     spec:
       securityContext:
-        # This tells Ceph to allow the Postgres user (999) to write to the disk
         fsGroup: 999
       containers:
         - name: wger-app
@@ -32,11 +31,14 @@ spec:
               value: "wger"
             - name: WGER_DB_HOST
               value: "localhost"
+            - name: WGER_PORT
+              value: "8000"
           ports:
             - containerPort: 8000
           volumeMounts:
             - name: media
               mountPath: /home/wger/media
+
         - name: db
           image: postgres:15-alpine
           env:
@@ -47,9 +49,12 @@ spec:
                 secretKeyRef: { name: fitness-auth, key: db-password }
             - name: POSTGRES_DB
               value: "wger"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
+
       volumes:
         - name: db-data
           persistentVolumeClaim: { claimName: fitness-db-pvc }

@@ -9,7 +9,7 @@ spec:
     - match: Host(`fitness.mvgates.com`)
       kind: Rule
       services:
-        - name: wger
+        - name: wger-service
           port: 8000
   tls:
     secretName: fitness-mvgates-tls
