@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: fitness-web
+  namespace: fitness
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`fitness.mvgates.com`)
+      kind: Rule
+      services:
+        - name: wger
+          port: 8000
+  tls:
+    secretName: mvgates-com-tls

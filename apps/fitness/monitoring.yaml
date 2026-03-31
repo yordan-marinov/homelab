@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-exporter-config
+  namespace: fitness
+data:
+  config.yml: |
+    jobs:
+      - name: "fitness_stats"
+        interval: '5m'
+        connections:
+          - "postgres://wger:$(DB_PASSWORD)@localhost:5434/wger?sslmode=disable"
+        queries:
+          - name: "user_weight"
+            help: "Weight tracking per user"
+            labels: [user_id]
+            values: [weight]
+            query: "SELECT user_id, weight FROM manager_weight ORDER BY date DESC LIMIT 1;"

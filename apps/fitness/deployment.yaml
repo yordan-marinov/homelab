@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wger
+  namespace: fitness
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wger
+  template:
+    metadata:
+      labels:
+        app: wger
+    spec:
+      containers:
+        - name: wger-app
+          image: wger/server:latest
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: WGER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
+            - name: WGER_DB_HOST
+              value: "localhost"
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: media
+              mountPath: /home/wger/media
+
+        - name: db
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
+            - name: POSTGRES_DB
+              value: "wger"
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+
+      volumes:
+        - name: db-data
+          persistentVolumeClaim: { claimName: fitness-db-pvc }
+        - name: media
+          persistentVolumeClaim: { claimName: fitness-media-pvc }
