@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fitness-mvgates-cert
+  namespace: fitness
+spec:
+  secretName: fitness-mvgates-tls
+  dnsNames:
+    - fitness.mvgates.com
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
