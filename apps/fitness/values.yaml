@@ -1,0 +1,47 @@
+wger:
+  # --- Image and Mode ---
+  image:
+    tag: latest
+  config:
+    production: true
+    debug: false
+    site_url: https://fitness.mvgates.com
+    allowed_hosts: fitness.mvgates.com,localhost,127.0.0.1
+
+  # --- Secrets (Link to your ExternalSecret) ---
+  existingSecret: pihole-web-password # We will reuse your Infisical-synced secret
+  djangoSecretKey:
+    existingSecret: fitness-auth
+    existingSecretKey: django-secret
+
+  # --- Database (Postgres) ---
+  postgresql:
+    enabled: true
+    postgresqlPassword:
+      existingSecret: fitness-auth
+      existingSecretKey: db-password
+    persistence:
+      enabled: true
+      storageClass: ceph-block
+      size: 5Gi
+
+  # --- Persistence (Media/Static) ---
+  persistence:
+    media:
+      enabled: true
+      storageClass: ceph-block
+      size: 10Gi
+
+  # --- Ingress (Traefik) ---
+  ingress:
+    enabled: true
+    className: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    hosts:
+      - host: fitness.mvgates.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: fitness-mvgates-tls
