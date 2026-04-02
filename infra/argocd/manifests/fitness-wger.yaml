@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://pascal-vogel.github.io/helm-charts/
+    - repoURL: https://wger-project.github.io/helm-charts
       chart: wger
-      targetRevision: 2.1.0
+      targetRevision: 1.1.0
       helm:
         valueFiles:
           - $values/apps/fitness/values.yaml
