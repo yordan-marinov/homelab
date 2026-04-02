@@ -16,22 +16,46 @@ spec:
       securityContext:
         fsGroup: 999
 
-      containers:
-        - name: wger-app
+      initContainers:
+        - name: init-setup
           image: wger/server:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              cd /home/wger/src &&
+              python3 manage.py migrate --noinput &&
+              python3 manage.py collectstatic --noinput
           env:
-            - name: WGER_PRODUCTION
-              value: "True"
-            - name: DJANGO_DEBUG
-              value: "False"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
             - name: WGER_DB_PASSWORD
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: db-password }
-            - name: WGER_PORT
-              value: "8000"
+          volumeMounts:
+            - name: static-assets
+              mountPath: /home/wger/static
+            - name: settings-override
+              mountPath: /home/wger/src/wger/settings_local.py
+              subPath: settings_local.py
+
+      containers:
+        - name: wger-app
+          image: wger/server:latest
+          workingDir: /home/wger/src
+          command: ["python3", "-m", "gunicorn"]
+          args:
+            - "wger.wsgi:application"
+            - "--bind=0.0.0.0:8000"
+            - "--workers=3"
+            - "--timeout=120"
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: WGER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
           ports:

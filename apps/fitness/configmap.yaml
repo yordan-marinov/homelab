@@ -7,7 +7,6 @@ data:
   settings_local.py: |
     import os
 
-    # Force PostgreSQL connection
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -19,13 +18,23 @@ data:
         }
     }
 
-    # Force Static and Media Handling
     DEBUG = False
-    SERVE_STATIC = True
     ALLOWED_HOSTS = ['fitness.mvgates.com', 'localhost', '127.0.0.1']
     CSRF_TRUSTED_ORIGINS = ['https://fitness.mvgates.com']
 
-    # Ensure WhiteNoise is active for CSS
     MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',
-    ] + [m for m in MIDDLEWARE if m != 'whitenoise.middleware.WhiteNoiseMiddleware']
+    ] + [
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    ]
+
+    STATIC_ROOT = '/home/wger/static'
+    STATIC_URL = '/static/'
+    # Use compression and caching for better performance
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
