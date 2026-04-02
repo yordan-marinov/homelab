@@ -18,6 +18,12 @@ spec:
       containers:
         - name: wger-app
           image: wger/server:latest
+          command: ["/usr/bin/bash", "-c"]
+          args:
+            - |
+              python3 manage.py collectstatic --noinput &&
+              python3 manage.py migrate --noinput &&
+              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
           env:
             - name: WGER_PRODUCTION
               value: "True"
@@ -47,14 +53,8 @@ spec:
               value: "https://fitness.mvgates.com"
             - name: SECURE_PROXY_SSL_HEADER
               value: "HTTP_X_FORWARDED_PROTO,https"
-            - name: USE_X_FORWARDED_HOST
-              value: "True"
-            - name: USE_X_FORWARDED_PORT
-              value: "True"
             - name: DJANGO_SERVE_STATIC_FILES
               value: "True"
-            - name: WGER_PORT
-              value: "8000"
           ports:
             - containerPort: 8000
           volumeMounts:
@@ -78,7 +78,6 @@ spec:
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
-
       volumes:
         - name: db-data
           persistentVolumeClaim: { claimName: fitness-db-pvc }
