@@ -1,5 +1,5 @@
 wger:
-  existingSecret: fitness-auth
+  existingSecret: pihole-web-password
   secretKeyKey: django-secret
 
   settings:
@@ -7,8 +7,6 @@ wger:
     ALLOWED_HOSTS: "fitness.mvgates.com,localhost,127.0.0.1"
     TIME_ZONE: "Europe/Sofia"
     DEBUG: false
-    SECURE_PROXY_SSL_HEADER: "['HTTP_X_FORWARDED_PROTO', 'https']"
-    USE_X_FORWARDED_HOST: "True"
 
 postgresql:
   enabled: true
@@ -35,7 +33,6 @@ ingress:
   className: "traefik"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.priority: "10"
   hosts:
     - host: fitness.mvgates.com
       paths:
