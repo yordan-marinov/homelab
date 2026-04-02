@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wger-settings
+  namespace: fitness
+data:
+  settings_local.py: |
+    import os
+
+    # Force PostgreSQL connection
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'wger',
+            'USER': 'wger',
+            'PASSWORD': os.environ.get('WGER_DB_PASSWORD'),
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
+
+    # Force Static and Media Handling
+    DEBUG = False
+    SERVE_STATIC = True
+    ALLOWED_HOSTS = ['fitness.mvgates.com', 'localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = ['https://fitness.mvgates.com']
+
+    # Ensure WhiteNoise is active for CSS
+    MIDDLEWARE = [
+        'whitenoise.middleware.WhiteNoiseMiddleware',
+    ] + [m for m in MIDDLEWARE if m != 'whitenoise.middleware.WhiteNoiseMiddleware']
