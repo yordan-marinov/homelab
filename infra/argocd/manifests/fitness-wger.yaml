@@ -12,19 +12,15 @@ spec:
       helm:
         valueFiles:
           - $values/apps/fitness/values.yaml
-
     - repoURL: https://github.com/mvg-labs/homelab.git
       targetRevision: main
       ref: values
-
     - repoURL: https://github.com/mvg-labs/homelab.git
       targetRevision: main
       path: apps/fitness/manifests
-
   destination:
     server: https://kubernetes.default.svc
     namespace: fitness
-
   syncPolicy:
     automated:
       prune: true
