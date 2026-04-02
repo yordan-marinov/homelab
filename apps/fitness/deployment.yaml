@@ -15,7 +15,6 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
-
       initContainers:
         - name: init-migrate
           image: wger/server:latest
