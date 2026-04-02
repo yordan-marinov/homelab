@@ -17,14 +17,11 @@ spec:
         fsGroup: 999
 
       initContainers:
-        - name: init-setup
+        - name: init-migrate
           image: wger/server:latest
           command: ["/bin/bash", "-c"]
           args:
-            - |
-              cd /home/wger/src &&
-              python3 manage.py migrate --noinput &&
-              python3 manage.py collectstatic --noinput
+            - "python3 manage.py migrate --noinput"
           env:
             - name: DJANGO_SECRET_KEY
               valueFrom:
@@ -42,30 +39,18 @@ spec:
               value: "127.0.0.1"
             - name: WGER_DB_PORT
               value: "5432"
-          volumeMounts:
-            - name: static-assets
-              mountPath: /home/wger/static
-            - name: media
-              mountPath: /home/wger/media
 
       containers:
         - name: wger-app
           image: wger/server:latest
-          workingDir: /home/wger/src
-          command: ["python3", "-m", "gunicorn"]
-          args:
-            - "wger.wsgi:application"
-            - "--bind=0.0.0.0:8000"
-            - "--workers=3"
-            - "--timeout=120"
-            - "--access-logfile=-"
-            - "--error-logfile=-"
           env:
+            - name: WGER_PRODUCTION
+              value: "True"
+            - name: DJANGO_DEBUG
+              value: "False"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
-            - name: DJANGO_DEBUG
-              value: "False"
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -79,6 +64,8 @@ spec:
               value: "127.0.0.1"
             - name: WGER_DB_PORT
               value: "5432"
+            - name: WGER_PORT
+              value: "8000"
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
             - name: DJANGO_ALLOWED_HOSTS
