@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fitness-app
+  namespace: fitness
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: fitness-app }
+  template:
+    metadata:
+      labels: { app: fitness-app }
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: wger
+          image: wger/server:latest
+          env:
+            - name: WGER_PRODUCTION
+              value: "True"
+            - name: DJANGO_DEBUG
+              value: "False"
+            - name: DJANGO_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: fitness-auth, key: django-secret } }
+            - name: WGER_SITE_URL
+              value: "https://fitness.mvgates.com"
+            - name: DJANGO_ALLOWED_HOSTS
+              value: "fitness.mvgates.com,127.0.0.1,localhost"
+            - name: CSRF_TRUSTED_ORIGINS
+              value: "https://fitness.mvgates.com"
+            - name: DJANGO_SERVE_STATIC_FILES
+              value: "True"
+            - name: WGER_DB_ENGINE
+              value: "django.db.backends.postgresql"
+            - name: WGER_DB_NAME
+              value: "wger"
+            - name: WGER_DB_USER
+              value: "wger"
+            - name: WGER_DB_HOST
+              value: "fitness-db"
+            - name: WGER_DB_PORT
+              value: "5432"
+            - name: WGER_DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: fitness-auth, key: db-password } }
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: media
+              mountPath: /home/wger/media
+      volumes:
+        - name: media
+          persistentVolumeClaim: { claimName: fitness-media-pvc }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fitness-app
+  namespace: fitness
+spec:
+  selector: { app: fitness-app }
+  ports: [{ port: 8000 }]
