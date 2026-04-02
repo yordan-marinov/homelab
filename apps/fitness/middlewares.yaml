@@ -7,6 +7,5 @@ spec:
   headers:
     customRequestHeaders:
       X-Forwarded-Proto: "https"
-    sslRedirect: true
-    browserXssFilter: true
-    contentTypeNosniff: true
+      X-Forwarded-Host: "fitness.mvgates.com"
+    contentTypeNosniff: false
