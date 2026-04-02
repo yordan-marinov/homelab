@@ -5,17 +5,52 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://github.com/mvg-labs/homelab.git
-    targetRevision: main
-    path: apps/fitness
-    helm:
-      valueFiles:
-        - values.yaml
+  sources:
+    - repoURL: https://wger-project.github.io/helm-charts
+      chart: wger
+      targetRevision: 0.2.5
+      helm:
+        parameters:
+          - name: "wger.app.production"
+            value: "true"
+          - name: "wger.settings.SITE_URL"
+            value: "https://fitness.mvgates.com"
+          - name: "wger.settings.ALLOWED_HOSTS"
+            value: "fitness.mvgates.com,127.0.0.1,localhost"
+          - name: "wger.existingSecret"
+            value: "fitness-auth"
+          - name: "wger.secretKeyKey"
+            value: "django-secret"
+          - name: "postgresql.auth.existingSecret"
+            value: "fitness-auth"
+          - name: "postgresql.auth.secretKeys.userPasswordKey"
+            value: "db-password"
+          - name: "postgresql.primary.persistence.storageClass"
+            value: "ceph-block"
+          - name: "ingress.enabled"
+            value: "true"
+          - name: "ingress.className"
+            value: "traefik-release"
+          - name: "ingress.hosts[0].host"
+            value: "fitness.mvgates.com"
+          - name: "ingress.hosts[0].paths[0].path"
+            value: "/"
+          - name: "ingress.hosts[0].paths[0].pathType"
+            value: "Prefix"
+          - name: "ingress.tls[0].secretName"
+            value: "fitness-mvgates-tls"
+
+    - repoURL: https://github.com/mvg-labs/homelab.git
+      targetRevision: main
+      path: apps/fitness/manifests
+
   destination:
     server: https://kubernetes.default.svc
     namespace: fitness
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
