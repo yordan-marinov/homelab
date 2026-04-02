@@ -6,30 +6,48 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: fitness-app }
+    matchLabels:
+      app: fitness-app
   template:
     metadata:
-      labels: { app: fitness-app }
+      labels:
+        app: fitness-app
     spec:
       enableServiceLinks: false
+      securityContext:
+        fsGroup: 999
       containers:
         - name: wger
           image: wger/server:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              cd /home/wger/src
+              python3 manage.py migrate --noinput
+              python3 manage.py collectstatic --noinput
+              # Use gunicorn to serve the app and Whitenoise to serve the CSS
+              exec python3 -m gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
           env:
             - name: WGER_PRODUCTION
               value: "True"
             - name: DJANGO_DEBUG
               value: "False"
+            - name: DJANGO_SERVE_STATIC_FILES
+              value: "True"
             - name: DJANGO_SECRET_KEY
-              valueFrom: { secretKeyRef: { name: fitness-auth, key: django-secret } }
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: django-secret }
+
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
             - name: DJANGO_ALLOWED_HOSTS
               value: "fitness.mvgates.com,127.0.0.1,localhost"
             - name: CSRF_TRUSTED_ORIGINS
               value: "https://fitness.mvgates.com"
-            - name: DJANGO_SERVE_STATIC_FILES
-              value: "True"
+            - name: SECURE_PROXY_SSL_HEADER
+              value: "HTTP_X_FORWARDED_PROTO,https"
+
+            # --- Database ---
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -41,21 +59,17 @@ spec:
             - name: WGER_DB_PORT
               value: "5432"
             - name: WGER_DB_PASSWORD
-              valueFrom: { secretKeyRef: { name: fitness-auth, key: db-password } }
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
           ports:
             - containerPort: 8000
           volumeMounts:
             - name: media
               mountPath: /home/wger/media
+            - name: static-assets
+              mountPath: /home/wger/static
       volumes:
         - name: media
           persistentVolumeClaim: { claimName: fitness-media-pvc }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: fitness-app
-  namespace: fitness
-spec:
-  selector: { app: fitness-app }
-  ports: [{ port: 8000 }]
+        - name: static-assets
+          emptyDir: {}
