@@ -1,7 +1,6 @@
 wger:
   app:
     production: true
-    debug: false
 
   settings:
     SITE_URL: "https://fitness.mvgates.com"
@@ -37,4 +36,4 @@ wger:
           - path: /
             pathType: ImplementationSpecific
     tls:
-      - secretName: fitness-mvgates-tls # Created by your template/certificate.yaml
+      - secretName: fitness-mvgates-tls
