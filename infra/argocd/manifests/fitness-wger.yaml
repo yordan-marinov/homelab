@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wger-fitness
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://pascal-vogel.github.io/helm-charts/
+      chart: wger
+      targetRevision: 2.1.0
+      helm:
+        valueFiles:
+          - $values/apps/fitness/values.yaml
+
+    - repoURL: https://github.com/mvg-labs/homelab.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: fitness
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
