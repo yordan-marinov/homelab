@@ -5,29 +5,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    - repoURL: https://wger-project.github.io/helm-charts
-      chart: wger
-      targetRevision: 1.1.0
-      helm:
-        valueFiles:
-          - $values/apps/fitness/values.yaml
-
-    - repoURL: https://github.com/mvg-labs/homelab.git
-      targetRevision: main
-      ref: values
-
-    - repoURL: https://github.com/mvg-labs/homelab.git
-      targetRevision: main
-      path: apps/fitness
-
+  source:
+    repoURL: https://github.com/mvg-labs/homelab.git
+    targetRevision: main
+    path: apps/fitness
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: fitness
-
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
