@@ -15,18 +15,17 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
-
       containers:
         - name: wger-app
           image: wger/server:latest
           env:
+            - name: WGER_PRODUCTION
+              value: "True"
+            - name: DJANGO_DEBUG
+              value: "False"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
-            - name: DJANGO_DEBUG
-              value: "False"
-            - name: DJANGO_ALLOWED_HOSTS
-              value: "fitness.mvgates.com,127.0.0.1,localhost"
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -42,22 +41,20 @@ spec:
               value: "5432"
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
+            - name: DJANGO_ALLOWED_HOSTS
+              value: "fitness.mvgates.com,127.0.0.1,localhost"
             - name: CSRF_TRUSTED_ORIGINS
               value: "https://fitness.mvgates.com"
+            - name: SECURE_PROXY_SSL_HEADER
+              value: "HTTP_X_FORWARDED_PROTO,https"
             - name: USE_X_FORWARDED_HOST
               value: "True"
             - name: USE_X_FORWARDED_PORT
               value: "True"
-            - name: SECURE_PROXY_SSL_HEADER
-              value: "HTTP_X_FORWARDED_PROTO,https"
-            - name: X_FORWARDED_PROTO
-              value: "https"
             - name: DJANGO_SERVE_STATIC_FILES
               value: "True"
             - name: WGER_PORT
               value: "8000"
-            - name: ALLOW_REGISTRATION
-              value: "True"
           ports:
             - containerPort: 8000
           volumeMounts:
