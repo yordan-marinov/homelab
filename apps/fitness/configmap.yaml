@@ -7,12 +7,13 @@ data:
   settings_local.py: |
     import os
 
+    # Force PostgreSQL - This overrides EVERYTHING
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'wger',
             'USER': 'wger',
-            'PASSWORD': os.environ.get('WGER_DB_PASSWORD'),
+            'PASSWORD': os.environ.get('WGER_DB_PASSWORD') or os.environ.get('DB_PASSWORD'),
             'HOST': '127.0.0.1',
             'PORT': '5432',
         }
@@ -22,10 +23,11 @@ data:
     ALLOWED_HOSTS = ['fitness.mvgates.com', 'localhost', '127.0.0.1']
     CSRF_TRUSTED_ORIGINS = ['https://fitness.mvgates.com']
 
+    # WhiteNoise is mandatory for CSS/JS in production
+    # We use the correct middleware order
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',
-    ] + [
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
@@ -35,6 +37,4 @@ data:
     ]
 
     STATIC_ROOT = '/home/wger/static'
-    STATIC_URL = '/static/'
-    # Use compression and caching for better performance
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
