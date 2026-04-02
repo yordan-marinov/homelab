@@ -1,0 +1,6 @@
+dependencies:
+- name: wger
+  repository: https://wger-project.github.io/helm-charts
+  version: 0.2.5
+digest: sha256:e0d27977ea200faae6358c980c10827ee18b608ffe2672cf870094ca6f24f19f
+generated: "2026-04-02T16:11:32.68794203Z"
