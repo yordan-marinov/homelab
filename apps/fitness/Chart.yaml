@@ -1,7 +1,0 @@
-apiVersion: v2
-name: fitness-wrapper
-version: 1.0.0
-dependencies:
-  - name: wger
-    version: 0.2.5
-    repository: https://wger-project.github.io/helm-charts
