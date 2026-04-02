@@ -4,7 +4,7 @@ wger:
 
   settings:
     SITE_URL: "https://fitness.mvgates.com"
-    ALLOWED_HOSTS: "fitness.mvgates.com,localhost,127.0.0.1"
+    ALLOWED_HOSTS: "fitness.mvgates.com,127.0.0.1,localhost"
     TIME_ZONE: "Europe/Sofia"
     SECURE_PROXY_SSL_HEADER: "['HTTP_X_FORWARDED_PROTO', 'https']"
 
@@ -27,7 +27,7 @@ wger:
 
   ingress:
     enabled: true
-    className: "traefik"
+    className: "traefik-release"
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
     hosts:
