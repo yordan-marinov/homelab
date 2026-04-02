@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wger-settings-override
+  namespace: fitness
+data:
+  settings_local.py: |
+    import os
+    # 1. FORCE POSTGRESQL (Kill the SQLite Ghost)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'wger',
+            'USER': 'wger',
+            'PASSWORD': os.environ.get('WGER_DB_PASSWORD'),
+            'HOST': 'fitness-db',
+            'PORT': '5432',
+        }
+    }
+    # 2. FORCE PRODUCTION SETTINGS
+    DEBUG = False
+    ALLOWED_HOSTS = ['fitness.mvgates.com', 'localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = ['https://fitness.mvgates.com']
+    # 3. FORCE WHITENOISE (Fix the CSS)
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'whitenoise.middleware.WhiteNoiseMiddleware',
+    ] + [
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    ]
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

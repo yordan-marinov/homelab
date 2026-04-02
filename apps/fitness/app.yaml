@@ -13,22 +13,31 @@ spec:
       labels:
         app: fitness-app
     spec:
+      # 1. THE NEURAL SHIELD: Prevents K8s from injecting 'WGER_' variables that break config
       enableServiceLinks: false
+
       securityContext:
-        fsGroup: 999
+        fsGroup: 999 # Fixes permissions for Ceph storage
+
       containers:
         - name: wger
           image: wger/server:latest
+          # 2. THE PRODUCTION ENGINE: Explicitly run migrations and start Gunicorn
           command: ["/bin/bash", "-c"]
           args:
             - |
               cd /home/wger/src
-              # Ensure migrations and CSS are ready
               python3 manage.py migrate --noinput
               python3 manage.py collectstatic --noinput
-              # Start Gunicorn (The Production Engine)
-              # We use 'exec' so Gunicorn becomes PID 1
+              # Use the Django shell to ensure the GymConfig exists (Fixes 500 error)
+              python3 manage.py shell -c "from wger.config.models import GymConfig; GymConfig.objects.get_or_create(pk=1)"
+              # Start the production server
               exec python3 -m gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
+
+          ports:
+            - containerPort: 8000
+              name: http
+
           env:
             - name: WGER_PRODUCTION
               value: "True"
@@ -39,6 +48,8 @@ spec:
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
+
+            # --- URL & Proxy Config ---
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
             - name: DJANGO_ALLOWED_HOSTS
@@ -47,6 +58,8 @@ spec:
               value: "https://fitness.mvgates.com"
             - name: SECURE_PROXY_SSL_HEADER
               value: "HTTP_X_FORWARDED_PROTO,https"
+
+            # --- Database Connection ---
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -54,21 +67,41 @@ spec:
             - name: WGER_DB_USER
               value: "wger"
             - name: WGER_DB_HOST
-              value: "fitness-db"
+              value: "fitness-db" # Matches the service in your db.yaml
             - name: WGER_DB_PORT
               value: "5432"
             - name: WGER_DB_PASSWORD
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: db-password }
-          ports:
-            - containerPort: 8000
+
           volumeMounts:
             - name: media
               mountPath: /home/wger/media
             - name: static-assets
               mountPath: /home/wger/static
+            # 3. SETTINGS INJECTION: Overwrites the internal config to point to Postgres
+            - name: settings-override
+              mountPath: /home/wger/src/wger/settings_local.py
+              subPath: settings_local.py
+
       volumes:
         - name: media
           persistentVolumeClaim: { claimName: fitness-media-pvc }
         - name: static-assets
           emptyDir: {}
+        - name: settings-override
+          configMap:
+            name: wger-settings-override
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fitness-app-svc
+  namespace: fitness
+spec:
+  selector:
+    app: fitness-app
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
