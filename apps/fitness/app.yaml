@@ -19,15 +19,26 @@ spec:
       containers:
         - name: wger
           image: wger/server:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              cd /home/wger/src
+              # Ensure migrations and CSS are ready
+              python3 manage.py migrate --noinput
+              python3 manage.py collectstatic --noinput
+              # Start Gunicorn (The Production Engine)
+              # We use 'exec' so Gunicorn becomes PID 1
+              exec python3 -m gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
           env:
             - name: WGER_PRODUCTION
               value: "True"
             - name: DJANGO_DEBUG
               value: "False"
+            - name: DJANGO_SERVE_STATIC_FILES
+              value: "True"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
-
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
             - name: DJANGO_ALLOWED_HOSTS
@@ -36,7 +47,6 @@ spec:
               value: "https://fitness.mvgates.com"
             - name: SECURE_PROXY_SSL_HEADER
               value: "HTTP_X_FORWARDED_PROTO,https"
-
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
