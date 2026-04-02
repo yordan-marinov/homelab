@@ -4,13 +4,17 @@ wger:
 
   settings:
     SITE_URL: "https://fitness.mvgates.com"
-    ALLOWED_HOSTS: "fitness.mvgates.com,127.0.0.1,localhost"
+    ALLOWED_HOSTS: "fitness.mvgates.com,localhost,127.0.0.1"
     TIME_ZONE: "Europe/Sofia"
     DEBUG: false
+    SECURE_PROXY_SSL_HEADER: "['HTTP_X_FORWARDED_PROTO', 'https']"
+    USE_X_FORWARDED_HOST: "True"
 
 postgresql:
   enabled: true
   auth:
+    database: wger
+    username: wger
     existingSecret: fitness-auth
     secretKeys:
       userPasswordKey: db-password
@@ -31,6 +35,7 @@ ingress:
   className: "traefik"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.priority: "10"
   hosts:
     - host: fitness.mvgates.com
       paths:
