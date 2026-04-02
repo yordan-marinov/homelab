@@ -1,15 +1,14 @@
-app:
-  production: true
-  debug: false
+wger:
+  app:
+    production: true    # This triggers Gunicorn
+  settings:
+    SITE_URL: "https://fitness.mvgates.com"
+    ALLOWED_HOSTS: "fitness.mvgates.com,127.0.0.1,localhost"
+    TIME_ZONE: "Europe/Sofia"
+    SECURE_PROXY_SSL_HEADER: "['HTTP_X_FORWARDED_PROTO', 'https']"
 
-settings:
-  SITE_URL: "https://fitness.mvgates.com"
-  ALLOWED_HOSTS: "fitness.mvgates.com,127.0.0.1,localhost"
-  TIME_ZONE: "Europe/Sofia"
-  SECURE_PROXY_SSL_HEADER: "['HTTP_X_FORWARDED_PROTO', 'https']"
-
-existingSecret: fitness-auth
-secretKeyKey: django-secret
+  existingSecret: fitness-auth
+  secretKeyKey: django-secret
 
 postgresql:
   enabled: true
@@ -25,6 +24,12 @@ postgresql:
       storageClass: "ceph-block"
       size: 5Gi
 
+persistence:
+  media:
+    enabled: true
+    storageClass: "ceph-block"
+    size: 10Gi
+
 ingress:
   enabled: true
   className: "traefik-release"
@@ -34,6 +39,6 @@ ingress:
     - host: fitness.mvgates.com
       paths:
         - path: /
-          pathType: ImplementationSpecific
+          pathType: Prefix
   tls:
     - secretName: fitness-mvgates-tls
