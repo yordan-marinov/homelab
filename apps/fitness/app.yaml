@@ -19,21 +19,11 @@ spec:
       containers:
         - name: wger
           image: wger/server:latest
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              cd /home/wger/src
-              python3 manage.py migrate --noinput
-              python3 manage.py create-or-update-gym
-              python3 manage.py collectstatic --noinput
-              exec python3 -m gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
           env:
             - name: WGER_PRODUCTION
               value: "True"
             - name: DJANGO_DEBUG
               value: "False"
-            - name: DJANGO_SERVE_STATIC_FILES
-              value: "True"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
