@@ -15,16 +15,58 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
+
       initContainers:
-        - name: init-migrate
+        - name: init-setup
           image: wger/server:latest
           command: ["/bin/bash", "-c"]
           args:
-            - "python3 manage.py migrate --noinput"
+            - |
+              cd /home/wger/src &&
+              python3 manage.py migrate --noinput &&
+              python3 manage.py collectstatic --noinput
           env:
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: WGER_DB_ENGINE
+              value: "django.db.backends.postgresql"
+            - name: WGER_DB_NAME
+              value: "wger"
+            - name: WGER_DB_USER
+              value: "wger"
+            - name: WGER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
+            - name: WGER_DB_HOST
+              value: "127.0.0.1"
+            - name: WGER_DB_PORT
+              value: "5432"
+          volumeMounts:
+            - name: static-assets
+              mountPath: /home/wger/static
+            - name: media
+              mountPath: /home/wger/media
+
+      containers:
+        - name: wger-app
+          image: wger/server:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              export PYTHONPATH=$PYTHONPATH:/home/wger/src
+              cd /home/wger/src
+              exec gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: DJANGO_DEBUG
+              value: "False"
+            - name: WGER_PRODUCTION
+              value: "True"
+
+            # --- Database ---
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -39,32 +81,7 @@ spec:
             - name: WGER_DB_PORT
               value: "5432"
 
-      containers:
-        - name: wger-app
-          image: wger/server:latest
-          env:
-            - name: WGER_PRODUCTION
-              value: "True"
-            - name: DJANGO_DEBUG
-              value: "False"
-            - name: DJANGO_SECRET_KEY
-              valueFrom:
-                secretKeyRef: { name: fitness-auth, key: django-secret }
-            - name: WGER_DB_ENGINE
-              value: "django.db.backends.postgresql"
-            - name: WGER_DB_NAME
-              value: "wger"
-            - name: WGER_DB_USER
-              value: "wger"
-            - name: WGER_DB_PASSWORD
-              valueFrom:
-                secretKeyRef: { name: fitness-auth, key: db-password }
-            - name: WGER_DB_HOST
-              value: "127.0.0.1"
-            - name: WGER_DB_PORT
-              value: "5432"
-            - name: WGER_PORT
-              value: "8000"
+            # --- Proxy & URL ---
             - name: WGER_SITE_URL
               value: "https://fitness.mvgates.com"
             - name: DJANGO_ALLOWED_HOSTS
