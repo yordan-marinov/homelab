@@ -15,23 +15,53 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
-      containers:
-        - name: wger-app
+      initContainers:
+        - name: init-setup
           image: wger/server:latest
-          command: ["/usr/bin/bash", "-c"]
+          command: ["/bin/bash", "-c"]
           args:
             - |
-              python3 manage.py collectstatic --noinput &&
               python3 manage.py migrate --noinput &&
-              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+              python3 manage.py collectstatic --noinput
           env:
-            - name: WGER_PRODUCTION
-              value: "True"
-            - name: DJANGO_DEBUG
-              value: "False"
             - name: DJANGO_SECRET_KEY
               valueFrom:
                 secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: WGER_DB_ENGINE
+              value: "django.db.backends.postgresql"
+            - name: WGER_DB_NAME
+              value: "wger"
+            - name: WGER_DB_USER
+              value: "wger"
+            - name: WGER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: db-password }
+            - name: WGER_DB_HOST
+              value: "127.0.0.1"
+            - name: WGER_DB_PORT
+              value: "5432"
+          volumeMounts:
+            - name: static-assets
+              mountPath: /home/wger/static
+            - name: media
+              mountPath: /home/wger/media
+
+      containers:
+        - name: wger-app
+          image: wger/server:latest
+          command: ["/home/wger/venv/bin/gunicorn"]
+          args:
+            - "wger.wsgi:application"
+            - "--bind=0.0.0.0:8000"
+            - "--workers=3"
+            - "--timeout=120"
+            - "--access-logfile=-"
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: fitness-auth, key: django-secret }
+            - name: DJANGO_DEBUG
+              value: "False"
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
@@ -58,6 +88,8 @@ spec:
           ports:
             - containerPort: 8000
           volumeMounts:
+            - name: static-assets
+              mountPath: /home/wger/static
             - name: media
               mountPath: /home/wger/media
 
@@ -78,8 +110,11 @@ spec:
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
+
       volumes:
         - name: db-data
           persistentVolumeClaim: { claimName: fitness-db-pvc }
         - name: media
           persistentVolumeClaim: { claimName: fitness-media-pvc }
+        - name: static-assets
+          emptyDir: {}
