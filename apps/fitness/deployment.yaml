@@ -15,12 +15,14 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
+
       initContainers:
         - name: init-setup
           image: wger/server:latest
           command: ["/bin/bash", "-c"]
           args:
             - |
+              cd /home/wger/src &&
               python3 manage.py migrate --noinput &&
               python3 manage.py collectstatic --noinput
           env:
@@ -49,13 +51,15 @@ spec:
       containers:
         - name: wger-app
           image: wger/server:latest
-          command: ["/home/wger/venv/bin/gunicorn"]
+          workingDir: /home/wger/src
+          command: ["python3", "-m", "gunicorn"]
           args:
             - "wger.wsgi:application"
             - "--bind=0.0.0.0:8000"
             - "--workers=3"
             - "--timeout=120"
             - "--access-logfile=-"
+            - "--error-logfile=-"
           env:
             - name: DJANGO_SECRET_KEY
               valueFrom:
