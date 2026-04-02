@@ -24,8 +24,8 @@ spec:
             - |
               cd /home/wger/src
               python3 manage.py migrate --noinput
+              python3 manage.py create-or-update-gym
               python3 manage.py collectstatic --noinput
-              # Use gunicorn to serve the app and Whitenoise to serve the CSS
               exec python3 -m gunicorn wger.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
           env:
             - name: WGER_PRODUCTION
@@ -47,7 +47,6 @@ spec:
             - name: SECURE_PROXY_SSL_HEADER
               value: "HTTP_X_FORWARDED_PROTO,https"
 
-            # --- Database ---
             - name: WGER_DB_ENGINE
               value: "django.db.backends.postgresql"
             - name: WGER_DB_NAME
